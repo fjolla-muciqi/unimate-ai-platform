@@ -1,0 +1,52 @@
+from sqlalchemy import Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.core.database import Base
+
+
+class Program(Base):
+    __tablename__ = "programs"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+
+    name: Mapped[str] = mapped_column(
+        String(200),
+        nullable=False,
+    )
+
+    degree_level: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+    )
+
+    specialization: Mapped[str | None] = mapped_column(
+        String(200),
+        nullable=True,
+    )
+
+    total_ects: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=180,
+    )
+
+    duration_years: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=3,
+    )
+
+    description: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    students = relationship(
+        "StudentProfile",
+        back_populates="program",
+    )
+    courses = relationship(
+    "Course",
+    back_populates="program",
+    cascade="all, delete-orphan",
+)
