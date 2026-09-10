@@ -8,6 +8,8 @@ class CourseCreate(BaseModel):
     ects: int = Field(ge=1, le=30)
     semester: int = Field(ge=1, le=12)
     program_id: int = Field(ge=1)
+    syllabus: str | None = None
+    professor_id: int | None = None
 
 
 class CourseUpdate(BaseModel):
@@ -17,6 +19,8 @@ class CourseUpdate(BaseModel):
     ects: int | None = Field(default=None, ge=1, le=30)
     semester: int | None = Field(default=None, ge=1, le=12)
     program_id: int | None = Field(default=None, ge=1)
+    syllabus: str | None = None
+    professor_id: int | None = None
 
 
 class CourseResponse(BaseModel):
@@ -27,6 +31,8 @@ class CourseResponse(BaseModel):
     ects: int
     semester: int
     program_id: int
+    syllabus: str | None
+    professor_id: int | None
 
     model_config = {
         "from_attributes": True

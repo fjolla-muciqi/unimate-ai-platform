@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, Text
+from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -39,6 +39,21 @@ class Program(Base):
     description: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
+    )
+
+    graduation_requirements: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    faculty_id: Mapped[int | None] = mapped_column(
+        ForeignKey("faculties.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
+    faculty = relationship(
+        "Faculty",
+        back_populates="programs",
     )
 
     students = relationship(

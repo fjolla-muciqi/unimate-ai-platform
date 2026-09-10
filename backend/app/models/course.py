@@ -36,9 +36,31 @@ class Course(Base):
         nullable=False,
     )
 
+    syllabus: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
     program_id: Mapped[int] = mapped_column(
         ForeignKey("programs.id", ondelete="CASCADE"),
         nullable=False,
+    )
+
+    professor_id: Mapped[int | None] = mapped_column(
+        ForeignKey("professors.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+
+    professor = relationship(
+        "Professor",
+        back_populates="courses",
+    )
+
+    prerequisites = relationship(
+        "CoursePrerequisite",
+        foreign_keys="CoursePrerequisite.course_id",
+        back_populates="course",
+        cascade="all, delete-orphan",
     )
 
     program = relationship(
