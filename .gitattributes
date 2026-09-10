@@ -1,0 +1,4 @@
+# Skriptet e shell-it duhet të mbeten me LF edhe kur repo-ja klonohet
+# në Windows, përndryshe Docker-i nuk e nis dot entrypoint-in
+# ("exec format error").
+*.sh text eol=lf

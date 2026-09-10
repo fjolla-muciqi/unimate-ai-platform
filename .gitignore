@@ -34,3 +34,13 @@ Thumbs.db
 dist/
 build/
 *.egg-info/
+# Frontend
+node_modules/
+frontend/.next/
+frontend/out/
+next-env.d.ts
+.vite/
+npm-debug.log*
+
+# Modeli i embeddings i ruajtur lokalisht
+models/

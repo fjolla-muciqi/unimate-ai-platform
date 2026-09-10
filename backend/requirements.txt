@@ -1,0 +1,35 @@
+# Web framework
+fastapi==0.141.1
+uvicorn[standard]==0.52.3
+python-multipart==0.0.32
+
+# Konfigurimi dhe validimi
+pydantic==2.13.4
+pydantic-settings==2.15.0
+python-dotenv==1.2.3
+email-validator==2.3.0
+
+# Baza e të dhënave
+SQLAlchemy==2.0.52
+alembic==1.19.1
+psycopg[binary]==3.3.4
+
+# Autentikimi
+python-jose[cryptography]==3.5.0
+pwdlib[argon2]==0.3.1
+
+# AI: LLM, vektorë dhe embeddings
+anthropic==1.3.0
+qdrant-client==1.19.0
+sentence-transformers==6.0.0
+
+# Nxjerrja e tekstit nga dokumentet
+pypdf==6.16.1
+python-docx==1.2.0
+
+# Gjenerimi i PDF-ve demo te seed-i (vetëm për të dhënat e demos)
+reportlab==5.0.1
+
+# Testet
+pytest==9.1.1
+httpx==0.28.1

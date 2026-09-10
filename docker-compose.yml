@@ -1,3 +1,11 @@
+# Të gjithë shërbimet e UniMate AI me një komandë:
+#
+#     docker compose up --build
+#
+# I vetmi hap manual është vendosja e ANTHROPIC_API_KEY te .env i
+# rrënjës (kopjo .env.example). Migrimet dhe të dhënat demo aplikohen
+# vetë nga entrypoint-i i API-t.
+
 services:
   postgres:
     image: postgres:17
@@ -8,6 +16,7 @@ services:
       POSTGRES_PASSWORD: UniMateDB2026!
       POSTGRES_DB: unimate_db
 
+    # Porta 5433 jashtë, që të mos përplaset me një Postgres lokal.
     ports:
       - "5433:5432"
 
@@ -18,7 +27,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U unimate -d unimate_db"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   qdrant:
     image: qdrant/qdrant:latest
@@ -31,6 +40,65 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
 
+  api:
+    build:
+      context: ./backend
+    container_name: unimate_api
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+
+    environment:
+      # Brenda rrjetit të Docker-it shërbimet gjenden me emrin e tyre.
+      DATABASE_URL: postgresql+psycopg://unimate:UniMateDB2026!@postgres:5432/unimate_db
+      QDRANT_URL: http://qdrant:6333
+
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-ndrysho-kete-vlere-para-prodhimit}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-claude-sonnet-5}
+
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+
+      # Vendose 0 nëse nuk i do të dhënat demo në çdo nisje.
+      SEED_ON_STARTUP: ${SEED_ON_STARTUP:-1}
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      # Hot-reload: kodi lexohet nga makina, jo nga imazhi.
+      - ./backend:/app
+      - uploads_data:/app/uploads
+      - model_cache:/models
+
+  web:
+    build:
+      context: ./frontend
+    container_name: unimate_web
+
+    depends_on:
+      - api
+
+    environment:
+      # Shfletuesi e thërret API-në nga jashtë Docker-it, prandaj
+      # localhost dhe jo emri i shërbimit.
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      WATCHPACK_POLLING: "true"
+
+    ports:
+      - "3000:3000"
+
+    volumes:
+      - ./frontend:/app
+      # node_modules mbeten ato të imazhit, jo ato të makinës.
+      - /app/node_modules
+      - /app/.next
+
 volumes:
   postgres_data:
   qdrant_data:
+  uploads_data:
+  model_cache:
