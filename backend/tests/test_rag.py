@@ -1,0 +1,138 @@
+"""Chunking dhe retrieval, pa Qdrant dhe pa embeddings reale."""
+
+from app.ai.rag.chunking import split_text_into_chunks
+from app.ai.rag.ingestion import create_content_hash
+from app.ai.rag import retriever
+from app.models.document import Document
+
+
+def test_empty_text_produces_no_chunks():
+    assert split_text_into_chunks("") == []
+    assert split_text_into_chunks("   \n  ") == []
+
+
+def test_short_text_stays_one_chunk():
+    chunks = split_text_into_chunks("Teksti i shkurtër.")
+
+    assert chunks == ["Teksti i shkurtër."]
+
+
+def test_long_text_is_split_with_overlap():
+    text = "a" * 2500
+
+    chunks = split_text_into_chunks(text, chunk_size=1000, overlap=150)
+
+    assert len(chunks) > 1
+    assert all(len(chunk) <= 1000 for chunk in chunks)
+    # Të gjithë tekstin e mbulojnë, dhe mbivendosja e rrit totalin.
+    assert sum(len(chunk) for chunk in chunks) > len(text)
+
+
+def test_chunking_covers_the_whole_text():
+    text = " ".join(f"fjala{i}" for i in range(500))
+
+    chunks = split_text_into_chunks(text)
+
+    assert chunks[0].startswith("fjala0")
+    assert chunks[-1].endswith("fjala499")
+
+
+def test_content_hash_is_stable_and_distinct():
+    assert create_content_hash("abc") == create_content_hash("abc")
+    assert create_content_hash("abc") != create_content_hash("abd")
+
+
+def _match(document_id: int, score: float, chunk_id: int = 1) -> dict:
+    return {
+        "vector_id": "v",
+        "score": score,
+        "chunk_id": chunk_id,
+        "document_id": document_id,
+        "page_number": 1,
+        "chunk_index": 0,
+        "section": None,
+        "content": "Përmbajtje",
+    }
+
+
+def _add_document(db_session, admin_user, is_active: bool) -> Document:
+    document = Document(
+        title="Rregullore",
+        file_name="rregullore.pdf",
+        file_path="uploads/documents/x.pdf",
+        document_type="REGULATION",
+        uploaded_by=admin_user.id,
+        is_active=is_active,
+    )
+
+    db_session.add(document)
+    db_session.commit()
+    db_session.refresh(document)
+
+    return document
+
+
+def test_low_scoring_matches_are_dropped(
+    db_session, admin_user, monkeypatch
+):
+    document = _add_document(db_session, admin_user, is_active=True)
+
+    monkeypatch.setattr(
+        retriever,
+        "semantic_search",
+        lambda **kwargs: [
+            _match(document.id, 0.9, chunk_id=1),
+            _match(document.id, 0.05, chunk_id=2),
+        ],
+    )
+
+    results = retriever.retrieve_context(
+        query="mungesat", db=db_session, min_score=0.25
+    )
+
+    assert [chunk.chunk_id for chunk in results] == [1]
+
+
+def test_chunks_of_deleted_documents_are_filtered_out(
+    db_session, admin_user, monkeypatch
+):
+    """Dokumentet e fshira mbeten në Qdrant, prandaj filtri i vërtetë
+    është në PostgreSQL."""
+
+    document = _add_document(db_session, admin_user, is_active=False)
+
+    monkeypatch.setattr(
+        retriever,
+        "semantic_search",
+        lambda **kwargs: [_match(document.id, 0.9)],
+    )
+
+    assert retriever.retrieve_context(query="x", db=db_session) == []
+
+
+def test_blank_query_skips_the_vector_store(db_session, monkeypatch):
+    def fail(**kwargs):
+        raise AssertionError("semantic_search nuk duhej thirrur")
+
+    monkeypatch.setattr(retriever, "semantic_search", fail)
+
+    assert retriever.retrieve_context(query="   ", db=db_session) == []
+
+
+def test_retrieved_chunk_carries_document_metadata(
+    db_session, admin_user, monkeypatch
+):
+    document = _add_document(db_session, admin_user, is_active=True)
+
+    monkeypatch.setattr(
+        retriever,
+        "semantic_search",
+        lambda **kwargs: [_match(document.id, 0.77)],
+    )
+
+    chunk = retriever.retrieve_context(query="x", db=db_session)[0]
+
+    assert chunk.document_title == "Rregullore"
+    assert chunk.file_name == "rregullore.pdf"
+    assert chunk.document_type == "REGULATION"
+    assert chunk.score == 0.77
