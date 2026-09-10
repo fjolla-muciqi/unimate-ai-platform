@@ -3,12 +3,14 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.audit import record_event
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin
+from app.models.audit_log import AuditEvent
 from app.models.course import Course
 from app.models.enrollment import Enrollment
 from app.models.student_profile import StudentProfile
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.enrollment import (
     EnrollmentCreate,
     EnrollmentResponse,
@@ -99,6 +101,14 @@ def get_enrollment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    """Një regjistrim i vetëm.
+
+    Administratori i sheh të gjitha; studenti vetëm të vetat. Id-ja
+    vjen nga URL-ja, prandaj pronësia verifikohet këtu përpara se të
+    kthehet çdo gjë — përndryshe kush do të mund të numëronte
+    regjistrimet e të tjerëve duke provuar id.
+    """
+
     enrollment = db.get(
         Enrollment,
         enrollment_id,
@@ -109,6 +119,37 @@ def get_enrollment(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Enrollment not found.",
         )
+
+    if current_user.role != UserRole.ADMIN:
+        profile = db.scalar(
+            select(StudentProfile).where(
+                StudentProfile.user_id == current_user.id
+            )
+        )
+
+        if (
+            profile is None
+            or enrollment.student_profile_id != profile.id
+        ):
+            record_event(
+                db=db,
+                user_id=current_user.id,
+                event_type=AuditEvent.UNAUTHORIZED_ACCESS_ATTEMPT,
+                detail=(
+                    f"Tentativë leximi e regjistrimit "
+                    f"{enrollment_id} që i përket një studenti tjetër."
+                ),
+                rule="enrollment_ownership",
+            )
+
+            db.commit()
+
+            # 404 dhe jo 403: një 403 do të konfirmonte se ky
+            # regjistrim ekziston.
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Enrollment not found.",
+            )
 
     return enrollment
 

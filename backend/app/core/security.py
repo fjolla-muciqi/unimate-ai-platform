@@ -91,13 +91,38 @@ def get_current_user(
         )
 
     return user
-def require_admin(
-    current_user: User = Depends(get_current_user),
-) -> User:
-    if current_user.role != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required.",
-        )
+def require_roles(*roles: UserRole):
+    """Ndërton një dependency që lejon vetëm rolet e dhëna.
 
-    return current_user
+    Deri tani ekzistonte vetëm `require_admin`, prandaj një profesor
+    trajtohej saktësisht si student në çdo endpoint. Ky konstruktor e
+    bën rolin e nevojshëm të dukshëm te vetë deklarata e endpoint-it.
+    """
+
+    allowed = set(roles)
+
+    def dependency(
+        current_user: User = Depends(get_current_user),
+    ) -> User:
+        if current_user.role not in allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    "Access requires one of: "
+                    + ", ".join(sorted(role.value for role in allowed))
+                    + "."
+                ),
+            )
+
+        return current_user
+
+    return dependency
+
+
+require_admin = require_roles(UserRole.ADMIN)
+
+require_professor = require_roles(UserRole.PROFESSOR)
+
+# Ngarkimi i dokumenteve i takon stafit akademik, jo vetëm adminit —
+# siç e kërkon specifikimi i fazës CORE.
+require_staff = require_roles(UserRole.ADMIN, UserRole.PROFESSOR)

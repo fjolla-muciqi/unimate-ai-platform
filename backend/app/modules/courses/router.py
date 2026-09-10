@@ -5,8 +5,13 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin
 from app.models.course import Course
+from app.models.course_prerequisite import CoursePrerequisite
 from app.models.program import Program
 from app.models.user import User
+from app.schemas.academic import (
+    PrerequisiteCreate,
+    PrerequisiteResponse,
+)
 from app.schemas.course import (
     CourseCreate,
     CourseResponse,
@@ -167,6 +172,99 @@ def delete_course(
         )
 
     db.delete(course)
+    db.commit()
+
+    return None
+
+@router.get(
+    "/{course_id}/prerequisites",
+    response_model=list[PrerequisiteResponse],
+)
+def list_prerequisites(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return db.scalars(
+        select(CoursePrerequisite).where(
+            CoursePrerequisite.course_id == course_id
+        )
+    ).all()
+
+
+@router.post(
+    "/{course_id}/prerequisites",
+    response_model=PrerequisiteResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def add_prerequisite(
+    course_id: int,
+    payload: PrerequisiteCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    if payload.prerequisite_id == course_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A course cannot be its own prerequisite.",
+        )
+
+    for identifier in (course_id, payload.prerequisite_id):
+        if db.get(Course, identifier) is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Course not found.",
+            )
+
+    existing = db.scalar(
+        select(CoursePrerequisite).where(
+            CoursePrerequisite.course_id == course_id,
+            CoursePrerequisite.prerequisite_id == payload.prerequisite_id,
+        )
+    )
+
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This prerequisite is already set.",
+        )
+
+    link = CoursePrerequisite(
+        course_id=course_id,
+        prerequisite_id=payload.prerequisite_id,
+    )
+
+    db.add(link)
+    db.commit()
+    db.refresh(link)
+
+    return link
+
+
+@router.delete(
+    "/{course_id}/prerequisites/{prerequisite_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def remove_prerequisite(
+    course_id: int,
+    prerequisite_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    link = db.scalar(
+        select(CoursePrerequisite).where(
+            CoursePrerequisite.course_id == course_id,
+            CoursePrerequisite.prerequisite_id == prerequisite_id,
+        )
+    )
+
+    if link is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Prerequisite not found.",
+        )
+
+    db.delete(link)
     db.commit()
 
     return None

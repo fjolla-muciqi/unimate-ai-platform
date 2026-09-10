@@ -13,7 +13,7 @@ from app.core.security import (
     require_admin,
     verify_password,
 )
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.auth import TokenResponse
 from app.schemas.user import UserCreate, UserResponse
 from fastapi.security import OAuth2PasswordRequestForm
@@ -48,7 +48,7 @@ def register_user(
         last_name=user_data.last_name,
         email=user_data.email,
         password_hash=hash_password(user_data.password),
-        role=user_data.role,
+        role=UserRole.STUDENT,
     )
 
     db.add(new_user)
@@ -56,6 +56,7 @@ def register_user(
     db.refresh(new_user)
 
     return new_user
+
 
 @router.post(
     "/login",

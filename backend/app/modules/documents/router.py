@@ -4,6 +4,7 @@ import uuid
 
 from fastapi import (
     APIRouter,
+    BackgroundTasks,
     Depends,
     File,
     Form,
@@ -14,12 +15,17 @@ from fastapi import (
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.audit import record_event
 from app.core.database import get_db
-from app.core.security import get_current_user, require_admin
-from app.models.document import Document
-from app.models.user import User
+from app.core.security import (
+    get_current_user,
+    require_staff,
+)
+from app.models.audit_log import AuditEvent
+from app.models.document import Document, DocumentStatus
+from app.models.user import User, UserRole
 from app.schemas.document import DocumentResponse
-from app.ai.rag.ingestion import ingest_document
+from app.ai.rag.ingestion import ingest_document_in_background
 
 
 router = APIRouter(
@@ -38,19 +44,65 @@ ALLOWED_EXTENSIONS = {
 }
 
 
+def owned_document(
+    document_id: int,
+    current_user: User,
+    db: Session,
+) -> Document:
+    """Dokumenti, nëse ky përdorues ka të drejtë ta menaxhojë.
+
+    Administratori i menaxhon të gjitha. Profesori vetëm ato që ka
+    ngarkuar vetë — përndryshe, sapo ngarkimi u hap për stafin, çdo
+    profesor do të mund të fshinte rregulloret e universitetit.
+    """
+
+    document = db.get(Document, document_id)
+
+    if document is None or not document.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found.",
+        )
+
+    if current_user.role == UserRole.ADMIN:
+        return document
+
+    if document.uploaded_by != current_user.id:
+        record_event(
+            db=db,
+            user_id=current_user.id,
+            event_type=AuditEvent.UNAUTHORIZED_ACCESS_ATTEMPT,
+            detail=(
+                f"Tentativë menaxhimi e dokumentit {document_id} "
+                "të ngarkuar nga një përdorues tjetër."
+            ),
+            rule="document_ownership",
+        )
+
+        db.commit()
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only manage documents you uploaded.",
+        )
+
+    return document
+
+
 @router.post(
     "/upload",
     response_model=DocumentResponse,
     status_code=status.HTTP_201_CREATED,
 )
 def upload_document(
+    background_tasks: BackgroundTasks,
     title: str = Form(...),
     document_type: str = Form(...),
     description: str | None = Form(None),
     academic_year: str | None = Form(None),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_staff),
 ):
     original_name = file.filename or "document"
 
@@ -87,43 +139,48 @@ def upload_document(
     db.commit()
     db.refresh(document)
 
+    # Ekstraktimi, chunking-u dhe embeddings zgjatin shumë sekonda:
+    # ngarkuesi e merr përgjigjen menjëherë dhe ndjek statusin.
+    background_tasks.add_task(
+        ingest_document_in_background,
+        document.id,
+    )
+
     return document
 
+
 @router.post(
-    "/{document_id}/ingest",
-    status_code=status.HTTP_200_OK,
+    "/{document_id}/reindex",
+    response_model=DocumentResponse,
+    status_code=status.HTTP_202_ACCEPTED,
 )
-def ingest_uploaded_document(
+def reindex_document(
     document_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_staff),
 ):
-    document = db.get(Document, document_id)
+    """Ri-indekson një dokument: chunks e vjetër zëvendësohen.
 
-    if not document or not document.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Document not found.",
-        )
+    Përdoret kur një ingestim ka dështuar ose kur skedari është
+    zëvendësuar. Profesori mund të ri-indeksojë vetëm dokumentet e
+    veta; administratori të gjitha.
+    """
 
-    try:
-        total_chunks = ingest_document(
-            document=document,
-            db=db,
-        )
+    document = owned_document(document_id, current_user, db)
 
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(exc),
-        )
+    document.status = DocumentStatus.PENDING
+    document.status_detail = None
 
-    return {
-        "document_id": document.id,
-        "title": document.title,
-        "chunks_created": total_chunks,
-        "status": "ingested",
-    }
+    db.commit()
+    db.refresh(document)
+
+    background_tasks.add_task(
+        ingest_document_in_background,
+        document.id,
+    )
+
+    return document
 
 
 @router.get(
@@ -168,15 +225,11 @@ def get_document(
 def delete_document(
     document_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin),
+    current_user: User = Depends(require_staff),
 ):
-    document = db.get(Document, document_id)
+    """Fshirje e butë. Profesori vetëm të vetat, admini të gjitha."""
 
-    if not document:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Document not found.",
-        )
+    document = owned_document(document_id, current_user, db)
 
     document.is_active = False
 
