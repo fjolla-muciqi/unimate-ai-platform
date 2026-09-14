@@ -39,6 +39,9 @@ node_modules/
 frontend/.next/
 frontend/out/
 next-env.d.ts
+
+# Cache inkremental i TypeScript-it, i rigjenerueshem me cdo build
+*.tsbuildinfo
 .vite/
 npm-debug.log*
 
