@@ -353,11 +353,17 @@ def seed_deadlines(db: Session, program: Program) -> int:
     created = 0
 
     for title, deadline_type, day_offset, description in DEADLINES:
+        due_date = today + timedelta(days=day_offset)
+
         exists = db.scalar(
             select(Deadline).where(Deadline.title == title)
         )
 
+        # Datat e demos janë relative ndaj ditës së nisjes. Pa këtë
+        # rifreskim, një bazë e seed-uar javë më parë do të tregonte
+        # afate që kanë kaluar tashmë.
         if exists:
+            exists.due_date = due_date
             continue
 
         db.add(
@@ -365,7 +371,7 @@ def seed_deadlines(db: Session, program: Program) -> int:
                 title=title,
                 description=description,
                 deadline_type=deadline_type,
-                due_date=today + timedelta(days=day_offset),
+                due_date=due_date,
                 program_id=(
                     program.id if deadline_type == "REGISTRATION" else None
                 ),
@@ -525,7 +531,9 @@ def seed_exams(db: Session, courses: dict[str, Course]) -> int:
             )
         )
 
+        # Si te afatet: provimet demo mbeten gjithmonë në të ardhmen.
         if exists:
+            exists.exam_date = exam_date
             continue
 
         db.add(
