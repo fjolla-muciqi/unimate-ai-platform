@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -23,6 +23,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ApiError, api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { UserRole } from "@/lib/types";
 import { cn, initials } from "@/lib/utils";
@@ -107,13 +108,55 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Studenti i sapo regjistruar nuk ka ende profil akademik, dhe pa të
+  // asnjë faqe studenti nuk ka të dhëna. Kontrollohet një herë pas
+  // kyçjes; `null` do të thotë "ende pa u kontrolluar".
+  const [hasProfile, setHasProfile] = useState<boolean | null>(null);
+
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
     }
   }, [loading, user, router]);
 
-  if (loading || !user) {
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    if (user.role !== "STUDENT") {
+      setHasProfile(true);
+
+      return;
+    }
+
+    api
+      .myProfile()
+      .then(() => setHasProfile(true))
+      .catch((caught) =>
+        // Vetëm 404 do të thotë "pa profil"; gabimet e tjera i shfaq
+        // vetë faqja, si më parë.
+        setHasProfile(!(caught instanceof ApiError && caught.status === 404)),
+      );
+  }, [user]);
+
+  const onOnboarding = pathname === "/onboarding";
+
+  useEffect(() => {
+    if (hasProfile === false && !onOnboarding) {
+      router.replace("/onboarding");
+    }
+
+    if (hasProfile === true && onOnboarding) {
+      router.replace("/dashboard");
+    }
+  }, [hasProfile, onOnboarding, router]);
+
+  const redirecting =
+    (hasProfile === false && !onOnboarding) ||
+    (hasProfile === true && onOnboarding);
+
+  if (loading || !user || hasProfile === null || redirecting) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="size-6 animate-spin text-muted-foreground" />

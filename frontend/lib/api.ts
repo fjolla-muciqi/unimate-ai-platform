@@ -226,6 +226,18 @@ export const api = {
     return request<MyProfile>("/api/student/me/profile");
   },
 
+  createMyProfile(payload: {
+    program_id: number;
+    academic_year: number;
+    semester: number;
+    preferred_language: MyProfile["preferred_language"];
+  }): Promise<MyProfile> {
+    return request<MyProfile>("/api/student/me/profile", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
   updateMyProfile(language: MyProfile["preferred_language"]): Promise<MyProfile> {
     return request<MyProfile>("/api/student/me/profile", {
       method: "PATCH",

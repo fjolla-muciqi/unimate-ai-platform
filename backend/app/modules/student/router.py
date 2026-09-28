@@ -24,7 +24,11 @@ from app.schemas.dashboard import (
 )
 from app.schemas.exam import ExamResponse
 from app.schemas.schedule import ScheduleResponse
-from app.schemas.student_profile import MyProfileResponse, MyProfileUpdate
+from app.schemas.student_profile import (
+    MyProfileCreate,
+    MyProfileResponse,
+    MyProfileUpdate,
+)
 from app.core.clock import utcnow
 
 
@@ -372,6 +376,110 @@ def update_my_profile(
     # Asistenti e lexon gjuhën përmes tool-it `get_my_profile`
     # (`academic_agent.answer_profile`).
     profile.preferred_language = payload.preferred_language
+
+    db.commit()
+    db.refresh(profile)
+
+    return build_my_profile(current_user, profile, db)
+
+
+@router.post(
+    "/profile",
+    response_model=MyProfileResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_my_profile(
+    payload: MyProfileCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Profili akademik i studentit të sapo regjistruar.
+
+    Regjistrimi publik krijon vetëm llogarinë; pa profil, asnjë faqe
+    studenti nuk ka të dhëna për të shfaqur. Lejohet vetëm një herë:
+    pas kësaj programin, vitin dhe semestrin i ndryshon administrata.
+    """
+
+    if current_user.role != UserRole.STUDENT:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Student access required.",
+        )
+
+    existing = db.scalar(
+        select(StudentProfile).where(
+            StudentProfile.user_id == current_user.id
+        )
+    )
+
+    if existing is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "Profili akademik ekziston tashmë. Për ndryshime "
+                "kontakto administratën."
+            ),
+        )
+
+    program = db.get(Program, payload.program_id)
+
+    if program is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Programi nuk u gjet.",
+        )
+
+    if payload.academic_year > program.duration_years:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"Programi zgjat {program.duration_years} vite; "
+                f"viti {payload.academic_year} nuk ekziston."
+            ),
+        )
+
+    # Viti N përmban semestrat 2N-1 dhe 2N.
+    if payload.semester not in (
+        2 * payload.academic_year - 1,
+        2 * payload.academic_year,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"Semestri {payload.semester} nuk i përket vitit "
+                f"{payload.academic_year}."
+            ),
+        )
+
+    profile = StudentProfile(
+        user_id=current_user.id,
+        # I pandryshueshëm dhe unik, sepse id-ja e përdoruesit është unike.
+        student_number=f"{utcnow().year}-{current_user.id:05d}",
+        program_id=program.id,
+        academic_year=payload.academic_year,
+        semester=payload.semester,
+        preferred_language=payload.preferred_language,
+    )
+
+    db.add(profile)
+    db.flush()
+
+    # Lëndët e semestrit regjistrohen vetë, që paneli, orari dhe
+    # provimet të kenë të dhëna që nga dita e parë.
+    courses = db.scalars(
+        select(Course).where(
+            Course.program_id == program.id,
+            Course.semester == payload.semester,
+        )
+    ).all()
+
+    for course in courses:
+        db.add(
+            Enrollment(
+                student_profile_id=profile.id,
+                course_id=course.id,
+            )
+        )
 
     db.commit()
     db.refresh(profile)

@@ -220,3 +220,102 @@ def test_profile_endpoint_is_for_students_only(client, admin_user):
         client.get("/api/student/me/profile", headers=headers).status_code
         == 403
     )
+
+
+# --- Plotësimi i profilit pas regjistrimit -------------------------
+
+
+def register_student(client) -> dict:
+    response = client.post(
+        "/api/auth/register",
+        json={
+            "first_name": "Blerta",
+            "last_name": "Gashi",
+            "email": "blerta@test.edu",
+            "password": "Student123!",
+        },
+    )
+    assert response.status_code in (200, 201), response.text
+
+    return auth_headers(login(client, "blerta@test.edu", "Student123!"))
+
+
+def test_new_student_completes_profile_and_is_enrolled(
+    client, academic_data
+):
+    headers = register_student(client)
+    program_id = academic_data["profile"].program_id
+
+    # Para profilit, faqet e studentit nuk kanë të dhëna.
+    assert (
+        client.get("/api/student/me/profile", headers=headers).status_code
+        == 404
+    )
+
+    created = client.post(
+        "/api/student/me/profile",
+        json={"program_id": program_id, "academic_year": 2, "semester": 3},
+        headers=headers,
+    )
+
+    assert created.status_code == 201, created.text
+    assert created.json()["preferred_language"] == "sq"
+
+    # Regjistrohet vetë në lëndët e semestrit 3 (CS201, CS202), jo në CS301.
+    courses = client.get("/api/student/me/courses", headers=headers).json()
+    assert sorted(course["code"] for course in courses) == ["CS201", "CS202"]
+
+    assert (
+        client.get("/api/student/me/dashboard", headers=headers).status_code
+        == 200
+    )
+
+
+def test_profile_can_be_completed_only_once(client, academic_data):
+    headers = register_student(client)
+    payload = {
+        "program_id": academic_data["profile"].program_id,
+        "academic_year": 1,
+        "semester": 1,
+    }
+
+    assert (
+        client.post("/api/student/me/profile", json=payload, headers=headers).status_code
+        == 201
+    )
+    assert (
+        client.post("/api/student/me/profile", json=payload, headers=headers).status_code
+        == 409
+    )
+
+
+def test_profile_rejects_impossible_year_and_semester(client, academic_data):
+    headers = register_student(client)
+    program_id = academic_data["profile"].program_id
+
+    wrong_semester = client.post(
+        "/api/student/me/profile",
+        json={"program_id": program_id, "academic_year": 1, "semester": 5},
+        headers=headers,
+    )
+    assert wrong_semester.status_code == 400
+
+    # Programi i fixture-it zgjat tre vite.
+    too_late = client.post(
+        "/api/student/me/profile",
+        json={"program_id": program_id, "academic_year": 4, "semester": 7},
+        headers=headers,
+    )
+    assert too_late.status_code == 400
+
+    chosen_number = client.post(
+        "/api/student/me/profile",
+        json={
+            "program_id": program_id,
+            "academic_year": 1,
+            "semester": 1,
+            "student_number": "2024-CS-001",
+        },
+        headers=headers,
+    )
+    assert chosen_number.status_code == 422

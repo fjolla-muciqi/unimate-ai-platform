@@ -52,3 +52,18 @@ class MyProfileUpdate(BaseModel):
     preferred_language: Literal["sq", "en"]
 
     model_config = {"extra": "forbid"}
+
+
+class MyProfileCreate(BaseModel):
+    """Plotësimi i profilit nga vetë studenti, një herë pas regjistrimit.
+
+    Numri i studentit nuk vjen nga studenti: e cakton sistemi, që të
+    mos mund të zgjidhet numri i dikujt tjetër.
+    """
+
+    program_id: int = Field(ge=1)
+    academic_year: int = Field(ge=1, le=10)
+    semester: int = Field(ge=1, le=12)
+    preferred_language: Literal["sq", "en"] = "sq"
+
+    model_config = {"extra": "forbid"}
