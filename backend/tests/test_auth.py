@@ -62,7 +62,7 @@ def test_admin_route_blocks_student(client, student_user):
     token = login(client, student_user.email, "Student123!")
 
     response = client.get(
-        "/api/auth/admin-test",
+        "/api/admin/overview",
         headers=auth_headers(token),
     )
 
@@ -73,7 +73,7 @@ def test_admin_route_allows_admin(client, admin_user):
     token = login(client, admin_user.email, "Admin123!")
 
     response = client.get(
-        "/api/auth/admin-test",
+        "/api/admin/overview",
         headers=auth_headers(token),
     )
 

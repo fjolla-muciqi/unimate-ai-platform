@@ -10,7 +10,6 @@ from app.core.security import (
     create_access_token,
     get_current_user,
     hash_password,
-    require_admin,
     verify_password,
 )
 from app.models.user import User, UserRole
@@ -112,13 +111,3 @@ def get_me(
     current_user: User = Depends(get_current_user),
 ):
     return current_user
-
-@router.get("/admin-test")
-def admin_test(
-    current_user: User = Depends(require_admin),
-):
-    return {
-        "message": "Admin access granted.",
-        "user_id": current_user.id,
-        "role": current_user.role,
-    }
