@@ -173,3 +173,34 @@ def test_interrupted_documents_are_marked_failed(db_session, admin_user):
     assert indexed.status == DocumentStatus.INDEXED
     # Dokumentet e fshira nuk shfaqen askund, s'ka pse të preken.
     assert deleted.status == DocumentStatus.PENDING
+
+
+def test_chunks_keep_sentences_whole():
+    text = (
+        "Biblioteka hapet në 08:00. Studenti huazon deri në pesë libra. "
+        "Afati është 21 ditë. Bursa kërkon notën 8.5 dhe 50 kredite."
+    )
+
+    chunks = split_text_into_chunks(text, chunk_size=70, overlap=0)
+
+    # Çdo fragment mbaron me fund fjalie, dhe "8.5" nuk ndahet.
+    assert all(chunk.endswith(".") for chunk in chunks)
+    assert any("8.5 dhe 50 kredite" in chunk for chunk in chunks)
+    assert all(len(chunk) <= 70 for chunk in chunks)
+
+
+def test_last_sentence_is_repeated_as_overlap():
+    text = "Fjalia e parë. Fjalia e dytë. Fjalia e tretë. Fjalia e katërt."
+
+    chunks = split_text_into_chunks(text, chunk_size=35, overlap=20)
+
+    assert len(chunks) > 1
+    # Fjalia e fundit e një fragmenti hap fragmentin pasardhës.
+    for previous, following in zip(chunks, chunks[1:]):
+        assert following.startswith(previous.split(". ")[-1].rstrip("."))
+
+
+def test_pdf_line_breaks_are_not_paragraphs():
+    chunks = split_text_into_chunks("e hënë deri\ne premte, 09:00-13:00.")
+
+    assert chunks == ["e hënë deri e premte, 09:00-13:00."]

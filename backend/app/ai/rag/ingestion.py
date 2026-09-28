@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.ai.rag.chunking import split_text_into_chunks
 from app.ai.rag.extractor import extract_document_text
 from app.ai.rag.vector_store import index_document_chunks
+from app.core.config import settings
 from app.core.database import SessionLocal
 from app.models.document import Document, DocumentStatus
 from app.models.document_chunk import DocumentChunk
@@ -48,7 +49,11 @@ def ingest_document(
         page_number = page["page_number"]
         text = page["text"]
 
-        chunks = split_text_into_chunks(text)
+        chunks = split_text_into_chunks(
+            text,
+            chunk_size=settings.rag_chunk_size,
+            overlap=settings.rag_chunk_overlap,
+        )
 
         for chunk_index, content in enumerate(chunks):
             db_chunk = DocumentChunk(

@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     rag_top_k: int = 5
     rag_min_score: float = 0.25
 
+    # Madhësia e fragmenteve në karaktere; ndryshimi kërkon ri-indeksim.
+    rag_chunk_size: int = 500
+    rag_chunk_overlap: int = 120
+
     anthropic_api_key: str | None = None
     llm_model: str = "claude-sonnet-5"
     llm_max_tokens: int = 8000
