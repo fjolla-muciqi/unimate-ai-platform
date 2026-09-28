@@ -1,0 +1,913 @@
+{
+  "generated_at": "2026-09-28T21:00:25",
+  "summary": {
+    "questions": 22,
+    "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "chunk_size": 500,
+    "chunk_overlap": 120,
+    "top_k": 5,
+    "min_score_in_production": 0.25,
+    "indexed_documents": [
+      "02_BIA_Cka eshte AI.pdf",
+      "rregullorja-e-studimeve-bachelor.pdf",
+      "syllabus-cs201-algoritme.pdf",
+      "udhezues-per-studentet-e-vitit-te-pare.pdf"
+    ],
+    "document": {
+      "hit@1": 0.8181818181818182,
+      "hit@3": 1.0,
+      "hit@5": 1.0,
+      "mrr": 0.8939393939393939
+    },
+    "page": {
+      "hit@1": 0.6363636363636364,
+      "hit@3": 0.9090909090909091,
+      "hit@5": 0.9090909090909091,
+      "mrr": 0.7651515151515151
+    },
+    "top_score_above_threshold": 1.0
+  },
+  "rows": [
+    {
+      "id": "A01",
+      "question": "Sa herë mund ta jap një provim sipas rregullores?",
+      "expected": {
+        "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+        "pages": [
+          2
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": 1,
+      "top_score": 0.7453,
+      "hits": [
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 2,
+          "score": 0.7453
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 2,
+          "score": 0.589
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.5147
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.511
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 2,
+          "score": 0.509
+        }
+      ]
+    },
+    {
+      "id": "A02",
+      "question": "Sa kredite ECTS duhen për t'u diplomuar?",
+      "expected": {
+        "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+        "pages": [
+          1,
+          3
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": 1,
+      "top_score": 0.8111,
+      "hits": [
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.8111
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.7958
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.6029
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 2,
+          "score": 0.5984
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.5425
+        }
+      ]
+    },
+    {
+      "id": "A03",
+      "question": "Kur bëhet regjistrimi i semestrit dimëror?",
+      "expected": {
+        "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+        "pages": [
+          1
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": 1,
+      "top_score": 0.6655,
+      "hits": [
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.6655
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 1,
+          "score": 0.609
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.6074
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 2,
+          "score": 0.5884
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.5823
+        }
+      ]
+    },
+    {
+      "id": "A04",
+      "question": "Sa kushton regjistrimi i vonuar në semestër?",
+      "expected": {
+        "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+        "pages": [
+          1
+        ]
+      },
+      "document_rank": 3,
+      "page_rank": 3,
+      "top_score": 0.5167,
+      "hits": [
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 2,
+          "score": 0.5167
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 2,
+          "score": 0.5166
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.4958
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 2,
+          "score": 0.4339
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.4136
+        }
+      ]
+    },
+    {
+      "id": "A05",
+      "question": "Si formohet nota përfundimtare e një lënde?",
+      "expected": {
+        "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+        "pages": [
+          2
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": 1,
+      "top_score": 0.5433,
+      "hits": [
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 2,
+          "score": 0.5433
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 1,
+          "score": 0.384
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 2,
+          "score": 0.3823
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.3801
+        },
+        {
+          "file_name": "02_BIA_Cka eshte AI.pdf",
+          "page_number": 4,
+          "score": 0.3256
+        }
+      ]
+    },
+    {
+      "id": "A06",
+      "question": "What minimum attendance in exercises is required before I can sit an exam?",
+      "expected": {
+        "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+        "pages": [
+          2
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": 1,
+      "top_score": 0.6281,
+      "hits": [
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 2,
+          "score": 0.6281
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 2,
+          "score": 0.5396
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 2,
+          "score": 0.4989
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 2,
+          "score": 0.4225
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.4182
+        }
+      ]
+    },
+    {
+      "id": "A07",
+      "question": "How many ECTS credits can be recognized when I transfer from another university?",
+      "expected": {
+        "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+        "pages": [
+          3
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": 2,
+      "top_score": 0.7152,
+      "hits": [
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.7152
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.6889
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.6873
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.5048
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 2,
+          "score": 0.4668
+        }
+      ]
+    },
+    {
+      "id": "A08",
+      "question": "Cila është literatura e lëndës CS201?",
+      "expected": {
+        "file_name": "syllabus-cs201-algoritme.pdf",
+        "pages": [
+          2
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": null,
+      "top_score": 0.5972,
+      "hits": [
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 1,
+          "score": 0.5972
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.3464
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 1,
+          "score": 0.3179
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.3158
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 1,
+          "score": 0.2905
+        }
+      ]
+    },
+    {
+      "id": "A09",
+      "question": "Çfarë ndodh nëse e dorëzoj detyrën e CS201 me vonesë?",
+      "expected": {
+        "file_name": "syllabus-cs201-algoritme.pdf",
+        "pages": [
+          2
+        ]
+      },
+      "document_rank": 2,
+      "page_rank": 2,
+      "top_score": 0.4657,
+      "hits": [
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 2,
+          "score": 0.4657
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 2,
+          "score": 0.4623
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 1,
+          "score": 0.4507
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 2,
+          "score": 0.4301
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.4157
+        }
+      ]
+    },
+    {
+      "id": "A13",
+      "question": "Deri në çfarë ore është e hapur biblioteka të premten?",
+      "expected": {
+        "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+        "pages": [
+          1
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": 1,
+      "top_score": 0.6297,
+      "hits": [
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 1,
+          "score": 0.6297
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.4432
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 2,
+          "score": 0.4419
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 1,
+          "score": 0.4092
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 2,
+          "score": 0.3702
+        }
+      ]
+    },
+    {
+      "id": "A14",
+      "question": "Cilat janë kushtet për të aplikuar për bursë akademike?",
+      "expected": {
+        "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+        "pages": [
+          2
+        ]
+      },
+      "document_rank": 3,
+      "page_rank": null,
+      "top_score": 0.5175,
+      "hits": [
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.5175
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.4983
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 1,
+          "score": 0.4265
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 2,
+          "score": 0.4149
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.4136
+        }
+      ]
+    },
+    {
+      "id": "A15",
+      "question": "Where is the Student Office located?",
+      "expected": {
+        "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+        "pages": [
+          1
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": 1,
+      "top_score": 0.6215,
+      "hits": [
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 1,
+          "score": 0.6215
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 2,
+          "score": 0.4799
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 1,
+          "score": 0.4779
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.3704
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.3035
+        }
+      ]
+    },
+    {
+      "id": "R01",
+      "question": "Çfarë note duhet për të kaluar një lëndë?",
+      "expected": {
+        "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+        "pages": [
+          2
+        ]
+      },
+      "document_rank": 2,
+      "page_rank": 2,
+      "top_score": 0.579,
+      "hits": [
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 2,
+          "score": 0.579
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 2,
+          "score": 0.5747
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.515
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 2,
+          "score": 0.4971
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 1,
+          "score": 0.4875
+        }
+      ]
+    },
+    {
+      "id": "R02",
+      "question": "Ku dërgoj email kur kam probleme me llogarinë?",
+      "expected": {
+        "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+        "pages": [
+          2
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": 2,
+      "top_score": 0.3311,
+      "hits": [
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 1,
+          "score": 0.3311
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 2,
+          "score": 0.2447
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 1,
+          "score": 0.1789
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 2,
+          "score": 0.1502
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.1201
+        }
+      ]
+    },
+    {
+      "id": "R03",
+      "question": "Kur mblidhet Këshilli Studentor?",
+      "expected": {
+        "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+        "pages": [
+          2
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": 1,
+      "top_score": 0.773,
+      "hits": [
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 2,
+          "score": 0.773
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 1,
+          "score": 0.6308
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 1,
+          "score": 0.4913
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.4791
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.4327
+        }
+      ]
+    },
+    {
+      "id": "R04",
+      "question": "Sa libra mund të huazoj nga biblioteka?",
+      "expected": {
+        "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+        "pages": [
+          1
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": 1,
+      "top_score": 0.4801,
+      "hits": [
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 1,
+          "score": 0.4801
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.3167
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.3105
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.3023
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 2,
+          "score": 0.29
+        }
+      ]
+    },
+    {
+      "id": "R05",
+      "question": "Cilat tema mbulohen në javët e fundit të CS201?",
+      "expected": {
+        "file_name": "syllabus-cs201-algoritme.pdf",
+        "pages": [
+          1
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": 1,
+      "top_score": 0.5768,
+      "hits": [
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 1,
+          "score": 0.5768
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 1,
+          "score": 0.487
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 2,
+          "score": 0.406
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 1,
+          "score": 0.3656
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.3314
+        }
+      ]
+    },
+    {
+      "id": "R06",
+      "question": "What is the plagiarism policy for CS201 assignments?",
+      "expected": {
+        "file_name": "syllabus-cs201-algoritme.pdf",
+        "pages": [
+          2
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": 2,
+      "top_score": 0.531,
+      "hits": [
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 1,
+          "score": 0.531
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 2,
+          "score": 0.3485
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.337
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.3178
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 1,
+          "score": 0.2803
+        }
+      ]
+    },
+    {
+      "id": "R07",
+      "question": "Si llogaritet nota mesatare e diplomës?",
+      "expected": {
+        "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+        "pages": [
+          3
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": 1,
+      "top_score": 0.7739,
+      "hits": [
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.7739
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.6043
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 2,
+          "score": 0.5668
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.5344
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 2,
+          "score": 0.4721
+        }
+      ]
+    },
+    {
+      "id": "R08",
+      "question": "Deri kur dorëzohet kërkesa për transferim?",
+      "expected": {
+        "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+        "pages": [
+          3
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": 1,
+      "top_score": 0.4913,
+      "hits": [
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.4913
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 2,
+          "score": 0.3137
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.2867
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 2,
+          "score": 0.2749
+        },
+        {
+          "file_name": "syllabus-cs201-algoritme.pdf",
+          "page_number": 2,
+          "score": 0.2716
+        }
+      ]
+    },
+    {
+      "id": "R09",
+      "question": "How long can I keep a borrowed library book?",
+      "expected": {
+        "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+        "pages": [
+          1
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": 1,
+      "top_score": 0.473,
+      "hits": [
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 1,
+          "score": 0.473
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.3593
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 2,
+          "score": 0.3374
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.3342
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.3157
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "question": "Sa zgjat programi bachelor?",
+      "expected": {
+        "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+        "pages": [
+          1
+        ]
+      },
+      "document_rank": 1,
+      "page_rank": 1,
+      "top_score": 0.7019,
+      "hits": [
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.7019
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 3,
+          "score": 0.6392
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 1,
+          "score": 0.6325
+        },
+        {
+          "file_name": "udhezues-per-studentet-e-vitit-te-pare.pdf",
+          "page_number": 1,
+          "score": 0.5821
+        },
+        {
+          "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+          "page_number": 2,
+          "score": 0.5499
+        }
+      ]
+    }
+  ]
+}
