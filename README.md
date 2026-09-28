@@ -62,6 +62,8 @@ administratorit.
    rolit te JWT-ja.
 6. Kyçu si **admin** → te `/admin` shfaqet tentativa e hapit 4 në
    regjistrin e sigurisë, me përdoruesin, rregullën dhe kohën.
+7. Te `/admin/manage` shto një provim për CS202 → pyet asistentin si
+   student *"Kur e kam provimin e radhës?"* dhe përgjigjja e përfshin.
 
 ## Arkitektura
 
@@ -309,6 +311,7 @@ Për të filluar nga zero, fshi volumin: `docker compose down -v`.
 | POST | `/api/auth/register` | — | Regjistrim (gjithmonë STUDENT) |
 | POST | `/api/auth/login` | — | Login, kthen JWT |
 | GET | `/api/auth/me` | i kyçur | Përdoruesi aktual |
+| POST | `/api/auth/change-password` | i kyçur | Ndryshim fjalëkalimi (kërkon atë aktual) |
 | POST | `/api/chat` | i kyçur | Pyetje te agjentët, kthen përgjigje + burime |
 | GET | `/api/chat/conversations` | i kyçur | Bisedat e mia |
 | GET | `/api/chat/conversations/{id}` | pronari | Historiku i një bisede |
@@ -316,6 +319,7 @@ Për të filluar nga zero, fshi volumin: `docker compose down -v`.
 | POST | `/api/chat/messages/{id}/feedback` | pronari | Vlerëso përgjigjen (1 / -1 / 0) |
 | POST | `/api/chat/search` | i kyçur | Retrieval i pastër, pa LLM (debug) |
 | GET | `/api/student/me/dashboard` | student | Paneli i plotë në një kërkesë |
+| GET / PATCH | `/api/student/me/profile` | student | Profili akademik; studenti ndryshon vetëm gjuhën |
 | GET | `/api/professor/me/dashboard` | **profesor** | Ngarkesa e ligjërimit në një kërkesë |
 | GET | `/api/professor/me/courses` | **profesor** | Lëndët që ligjëron, me numrin e studentëve |
 | GET | `/api/professor/me/schedule` | **profesor** | Orari i ligjëratave |
@@ -333,6 +337,8 @@ Për të filluar nga zero, fshi volumin: `docker compose down -v`.
 | GET | `/api/admin/overview` | **admin** | Numrat e platformës |
 | GET | `/api/admin/audit-logs` | **admin** | Regjistri i sigurisë |
 | GET | `/api/admin/audit-logs/summary` | **admin** | Ngjarjet sipas llojit |
+| GET | `/api/admin/users` | **admin** | Përdoruesit, me filtër roli dhe kërkim |
+| PATCH | `/api/admin/users/{id}` | **admin** | Aktivizo / çaktivizo llogarinë (jo veten) |
 | GET | `/api/analytics/overview` | **admin** | Metrikat e asistentit |
 | CRUD | `/api/programs`, `/api/courses`, `/api/schedules`, `/api/exams`, `/api/enrollments`, `/api/student-profiles`, `/api/faculties`, `/api/professors` | admin për shkrim | CRUD administrativ |
 
@@ -362,7 +368,7 @@ cd backend
 pytest
 ```
 
-**136 teste** mbi SQLite in-memory — pa Postgres, pa Qdrant dhe pa
+**153 teste** mbi SQLite in-memory — pa Postgres, pa Qdrant dhe pa
 thirrje reale te Claude.
 
 | Skedari | Çfarë mbulon |
@@ -372,11 +378,12 @@ thirrje reale te Claude.
 | `test_professor.py` | Roli i profesorit, izolimi mes kolegëve, pronësia e dokumenteve, degëzimi i tools |
 | `test_dashboard.py` | Numrat e panelit, progresi në ECTS, filtrimi i provimeve |
 | `test_auth.py` | Regjistrim, login, JWT, kontrolli i roleve |
+| `test_account.py` | Menaxhimi i përdoruesve, ndryshimi i fjalëkalimit, profili i studentit |
 | `test_rag.py` | Chunking, pragu i ngjashmërisë, filtrimi i dokumenteve të fshira |
 | `test_agent_tools.py` | Tools akademike dhe numërimi i qëndrueshëm i burimeve |
 | `test_agent_routing.py` | Harta tool→agjent, regjistrimi i agjentëve |
 | `test_agent_loop.py` | Cikli agentik me klient të simuluar: `tool_result`, thirrjet paralele, gabimet, kufiri i iteracioneve |
-| `test_tutor.py` | Mbledhja e materialit, quiz dhe flashcards si artifacts |
+| `test_tutor.py` | Mbledhja e materialit, niveli sipas vitit akademik, quiz dhe flashcards si artifacts |
 | `test_validator.py` | Heqja e citimeve të shpikura, shënimi i pyetjeve pa përgjigje |
 | `test_chat_api.py` | Bisedat, historiku, privatësia mes përdoruesve |
 | `test_analytics.py` | Metrikat e panelit dhe feedback-u i studentëve |
@@ -407,9 +414,11 @@ frontend/
   app/
     (auth)/        login, register
     (app)/         dashboard, courses, schedule, exams, teaching,
-                   teaching/students, chat, documents, admin, analytics
+                   teaching/students, chat, documents, admin,
+                   admin/manage, analytics, profile
   components/
     ui/            shadcn/ui
+    admin/         ResourceManager (CRUD i përgjithshëm), UsersManager
     layout/        app shell, page header, gjendjet
     chat/          burimet, artifacts (quiz + flashcards)
     documents/     shenja e statusit
