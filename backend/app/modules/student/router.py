@@ -24,6 +24,7 @@ from app.schemas.dashboard import (
 )
 from app.schemas.exam import ExamResponse
 from app.schemas.schedule import ScheduleResponse
+from app.schemas.student_profile import MyProfileResponse, MyProfileUpdate
 from app.core.clock import utcnow
 
 
@@ -324,3 +325,55 @@ def get_my_dashboard(
             ),
         ),
     )
+
+
+def build_my_profile(
+    current_user: User,
+    profile: StudentProfile,
+    db: Session,
+) -> MyProfileResponse:
+    program = db.get(Program, profile.program_id)
+
+    return MyProfileResponse(
+        full_name=f"{current_user.first_name} {current_user.last_name}",
+        email=current_user.email,
+        student_number=profile.student_number,
+        program_name=program.name if program else None,
+        academic_year=profile.academic_year,
+        semester=profile.semester,
+        preferred_language=profile.preferred_language,
+    )
+
+
+@router.get(
+    "/profile",
+    response_model=MyProfileResponse,
+)
+def get_my_profile(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    profile = get_student_profile(current_user, db)
+
+    return build_my_profile(current_user, profile, db)
+
+
+@router.patch(
+    "/profile",
+    response_model=MyProfileResponse,
+)
+def update_my_profile(
+    payload: MyProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    profile = get_student_profile(current_user, db)
+
+    # Asistenti e lexon gjuhën përmes tool-it `get_my_profile`
+    # (`academic_agent.answer_profile`).
+    profile.preferred_language = payload.preferred_language
+
+    db.commit()
+    db.refresh(profile)
+
+    return build_my_profile(current_user, profile, db)

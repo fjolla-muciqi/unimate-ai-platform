@@ -8,13 +8,14 @@ gjendjen e platformës dhe me Guardrail Agent-in.
 
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy import func, select
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
+from app.core.audit import record_event
 from app.core.database import get_db
 from app.core.security import require_admin
-from app.models.audit_log import AuditLog
+from app.models.audit_log import AuditEvent, AuditLog, BLOCKING_EVENTS
 from app.models.course import Course
 from app.models.document import Document, DocumentStatus
 from app.models.document_chunk import DocumentChunk
@@ -23,6 +24,8 @@ from app.models.program import Program
 from app.models.user import User, UserRole
 from app.schemas.admin import (
     AdminOverview,
+    AdminUserResponse,
+    AdminUserUpdate,
     AuditLogResponse,
     AuditSummaryItem,
 )
@@ -81,7 +84,10 @@ def admin_overview(
     blocked = db.scalar(
         select(func.count())
         .select_from(AuditLog)
-        .where(AuditLog.created_at >= since)
+        .where(
+            AuditLog.created_at >= since,
+            AuditLog.event_type.in_(BLOCKING_EVENTS),
+        )
     ) or 0
 
     return AdminOverview(
@@ -167,3 +173,79 @@ def audit_summary(
         AuditSummaryItem(event_type=event_type, count=count)
         for event_type, count in rows
     ]
+
+
+@router.get(
+    "/users",
+    response_model=list[AdminUserResponse],
+)
+def list_users(
+    role: UserRole | None = Query(default=None),
+    search: str | None = Query(default=None, max_length=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    query = select(User)
+
+    if role is not None:
+        query = query.where(User.role == role)
+
+    if search:
+        pattern = f"%{search.strip()}%"
+
+        query = query.where(
+            or_(
+                User.email.ilike(pattern),
+                User.first_name.ilike(pattern),
+                User.last_name.ilike(pattern),
+            )
+        )
+
+    return db.scalars(
+        query.order_by(User.role, User.last_name, User.first_name)
+    ).all()
+
+
+@router.patch(
+    "/users/{user_id}",
+    response_model=AdminUserResponse,
+)
+def update_user(
+    user_id: int,
+    payload: AdminUserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    user = db.get(User, user_id)
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Përdoruesi nuk u gjet.",
+        )
+
+    # Një admin që çaktivizon veten mbyllet jashtë sistemit, dhe nëse
+    # është i vetmi, askush nuk mund ta rikthejë nga paneli.
+    if user.id == current_user.id and not payload.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Nuk mund ta çaktivizosh llogarinë tënde.",
+        )
+
+    if user.is_active != payload.is_active:
+        user.is_active = payload.is_active
+
+        record_event(
+            db,
+            user_id=current_user.id,
+            event_type=AuditEvent.USER_STATUS_CHANGED,
+            detail=(
+                f"{user.email} u "
+                f"{'aktivizua' if payload.is_active else 'çaktivizua'}."
+            ),
+        )
+
+        db.commit()
+        db.refresh(user)
+
+    return user

@@ -13,7 +13,7 @@ from app.core.security import (
     verify_password,
 )
 from app.models.user import User, UserRole
-from app.schemas.auth import TokenResponse
+from app.schemas.auth import PasswordChange, TokenResponse
 from app.schemas.user import UserCreate, UserResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -111,3 +111,34 @@ def get_me(
     current_user: User = Depends(get_current_user),
 ):
     return current_user
+
+
+@router.post(
+    "/change-password",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def change_password(
+    payload: PasswordChange,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    # Fjalëkalimi aktual kërkohet edhe me token të vlefshëm: një
+    # token i vjedhur nuk duhet të mjaftojë për ta marrë llogarinë.
+    if not verify_password(
+        payload.current_password,
+        current_user.password_hash,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Fjalëkalimi aktual është i gabuar.",
+        )
+
+    if payload.new_password == payload.current_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Fjalëkalimi i ri duhet të ndryshojë nga ai aktual.",
+        )
+
+    current_user.password_hash = hash_password(payload.new_password)
+
+    db.commit()

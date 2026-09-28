@@ -19,6 +19,19 @@ class AuditEvent(str):
     UNAUTHORIZED_ACCESS_ATTEMPT = "unauthorized_access_attempt"
     OUTPUT_BLOCKED = "output_blocked"
 
+    # Veprime administrative, jo sulme: regjistrohen për gjurmueshmëri.
+    USER_STATUS_CHANGED = "user_status_changed"
+
+
+# Ngjarjet ku Guardrail-i ose kontrolli i qasjes ndaloi një kërkesë.
+# Numri "të bllokuara" te paneli numëron vetëm këto.
+BLOCKING_EVENTS = (
+    AuditEvent.GUARDRAIL_BLOCK,
+    AuditEvent.PROMPT_INJECTION_DETECTED,
+    AuditEvent.UNAUTHORIZED_ACCESS_ATTEMPT,
+    AuditEvent.OUTPUT_BLOCKED,
+)
+
 
 class AuditLog(Base):
     """Gjurma e ngjarjeve të sigurisë.

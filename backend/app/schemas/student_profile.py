@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -30,3 +32,23 @@ class StudentProfileResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+class MyProfileResponse(BaseModel):
+    """Profili akademik siç e sheh vetë studenti."""
+
+    full_name: str
+    email: str
+    student_number: str
+    program_name: str | None
+    academic_year: int
+    semester: int
+    preferred_language: str
+
+
+class MyProfileUpdate(BaseModel):
+    """Studenti ndryshon vetëm gjuhën. Numrin, programin dhe vitin
+    i menaxhon administrata, sepse prekin regjistrimet zyrtare."""
+
+    preferred_language: Literal["sq", "en"]
+
+    model_config = {"extra": "forbid"}

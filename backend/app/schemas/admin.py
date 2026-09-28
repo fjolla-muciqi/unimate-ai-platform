@@ -42,3 +42,30 @@ class AuditLogResponse(BaseModel):
 class AuditSummaryItem(BaseModel):
     event_type: str
     count: int
+
+
+class AdminUserResponse(BaseModel):
+    """Një llogari te lista e përdoruesve të administratorit."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    first_name: str
+    last_name: str
+    email: str
+    role: str
+    is_active: bool
+    created_at: datetime
+
+
+class AdminUserUpdate(BaseModel):
+    """Administratori mund vetëm ta aktivizojë ose çaktivizojë një llogari.
+
+    Roli mungon me qëllim: ai lidhet me të dhënat akademike
+    (`StudentProfile` për studentin, `Professor` për profesorin), dhe
+    një ndryshim i thjeshtë roli do t'i linte ato të paqëndrueshme.
+    """
+
+    is_active: bool
+
+    model_config = ConfigDict(extra="forbid")
