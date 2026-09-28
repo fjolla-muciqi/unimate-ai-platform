@@ -12,7 +12,7 @@ para se orkestrimi të nisë, prandaj modeli nuk thirret kurrë. Kjo
 është vetë poenta — bllokimi nuk varet nga bindshmëria e modelit.
 """
 
-from datetime import datetime, time, timedelta
+from datetime import time, timedelta
 
 import pytest
 from sqlalchemy import select
@@ -27,6 +27,7 @@ from app.models.schedule import Schedule
 from app.models.student_profile import StudentProfile
 from app.models.user import User, UserRole
 from tests.conftest import auth_headers, login
+from app.core.clock import utcnow
 
 
 @pytest.fixture
@@ -92,7 +93,7 @@ def other_student(db_session, academic_data):
         Exam(
             course_id=private_course.id,
             exam_type="FINAL",
-            exam_date=datetime.utcnow() + timedelta(days=10),
+            exam_date=utcnow() + timedelta(days=10),
             room="Z-101",
         )
     )

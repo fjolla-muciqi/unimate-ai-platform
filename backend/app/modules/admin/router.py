@@ -6,7 +6,7 @@ nga `/api/analytics/overview`; këtu qëndron ajo që ka të bëjë me
 gjendjen e platformës dhe me Guardrail Agent-in.
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
@@ -26,6 +26,7 @@ from app.schemas.admin import (
     AuditLogResponse,
     AuditSummaryItem,
 )
+from app.core.clock import utcnow
 
 
 router = APIRouter(
@@ -66,7 +67,7 @@ def admin_overview(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
-    since = datetime.utcnow() - timedelta(days=ACTIVITY_WINDOW_DAYS)
+    since = utcnow() - timedelta(days=ACTIVITY_WINDOW_DAYS)
 
     questions = db.scalar(
         select(func.count())

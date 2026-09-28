@@ -1,4 +1,3 @@
-from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, or_, select
@@ -25,6 +24,7 @@ from app.schemas.dashboard import (
 )
 from app.schemas.exam import ExamResponse
 from app.schemas.schedule import ScheduleResponse
+from app.core.clock import utcnow
 
 
 router = APIRouter(
@@ -171,7 +171,7 @@ def get_my_dashboard(
     profile = get_student_profile(current_user, db)
     program = db.get(Program, profile.program_id)
 
-    now = datetime.utcnow()
+    now = utcnow()
 
     enrollments = db.scalars(
         select(Enrollment).where(

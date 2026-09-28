@@ -4,7 +4,7 @@ Testet punojnë mbi një SQLite in-memory, pa Postgres, pa Qdrant
 dhe pa thirrje reale te Claude. Çdo test merr bazë të pastër.
 """
 
-from datetime import datetime, time, timedelta
+from datetime import time, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -22,6 +22,7 @@ from app.models.program import Program
 from app.models.schedule import Schedule
 from app.models.student_profile import StudentProfile
 from app.models.user import User, UserRole
+from app.core.clock import utcnow
 
 
 @pytest.fixture
@@ -183,7 +184,7 @@ def academic_data(db_session, student_user):
         ]
     )
 
-    now = datetime.utcnow()
+    now = utcnow()
 
     db_session.add_all(
         [

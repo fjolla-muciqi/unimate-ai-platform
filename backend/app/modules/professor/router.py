@@ -6,7 +6,6 @@ nxjerrë prej JWT-së — asnjë id profesori nuk pranohet nga klienti,
 prandaj një profesor nuk sheh dot studentët e një kolegu.
 """
 
-from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
@@ -32,6 +31,7 @@ from app.schemas.dashboard import (
 )
 from app.schemas.exam import ExamResponse
 from app.schemas.schedule import ScheduleResponse
+from app.core.clock import utcnow
 
 
 router = APIRouter(
@@ -235,7 +235,7 @@ def get_my_dashboard(
         )
     }
 
-    now = datetime.utcnow()
+    now = utcnow()
     today = now.strftime("%A")
 
     today_slots = (

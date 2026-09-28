@@ -5,7 +5,7 @@ jo placeholder. Këto teste e mbajnë atë premtim: numrat vijnë nga
 regjistrimet e vërteta të studentit të kyçur.
 """
 
-from datetime import datetime, time, timedelta
+from datetime import time, timedelta
 
 import pytest
 from sqlalchemy import select
@@ -16,6 +16,7 @@ from app.models.enrollment import Enrollment
 from app.models.notification import Notification
 from app.models.schedule import Schedule
 from tests.conftest import auth_headers, login
+from app.core.clock import utcnow
 
 
 @pytest.fixture
@@ -96,7 +97,7 @@ def test_dashboard_shows_todays_schedule_only(
     student_user,
     academic_data,
 ):
-    today = datetime.utcnow().strftime("%A")
+    today = utcnow().strftime("%A")
 
     db_session.add(
         Schedule(
@@ -138,14 +139,14 @@ def test_dashboard_counts_deadlines_notifications_and_documents(
             Deadline(
                 title="Regjistrimi i lëndëve",
                 deadline_type="REGISTRATION",
-                due_date=datetime.utcnow() + timedelta(days=10),
+                due_date=utcnow() + timedelta(days=10),
                 program_id=program_id,
             ),
             # E kaluar: nuk duhet numëruar.
             Deadline(
                 title="Afat i skaduar",
                 deadline_type="PAYMENT",
-                due_date=datetime.utcnow() - timedelta(days=3),
+                due_date=utcnow() - timedelta(days=3),
                 program_id=None,
             ),
             Notification(

@@ -1,4 +1,3 @@
-from datetime import datetime
 
 import anthropic
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -24,6 +23,7 @@ from app.schemas.chat import (
     SearchResult,
     Source,
 )
+from app.core.clock import utcnow
 
 
 router = APIRouter(
@@ -207,7 +207,7 @@ def chat(
     db.add(assistant_message)
 
     # Bisedat renditen sipas aktivitetit të fundit.
-    conversation.updated_at = datetime.utcnow()
+    conversation.updated_at = utcnow()
 
     db.commit()
     db.refresh(conversation)
