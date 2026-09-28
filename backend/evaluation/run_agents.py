@@ -22,6 +22,7 @@ from sqlalchemy import select
 
 from app.ai.agents import orchestrator, tutor_agent
 from app.ai.llm.client import get_anthropic_client
+from app.ai.rag.vector_store import get_embedding_model
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.models.user import User
@@ -152,6 +153,10 @@ def main() -> None:
     # thirrje, edhe ajo e Tutor-it, kalon nga kufiri i buxhetit.
     orchestrator.get_anthropic_client = lambda: client
     tutor_agent.get_anthropic_client = lambda: client
+
+    # Ngarkimi i modelit të embeddings zgjat disa sekonda herën e parë.
+    # Pa këtë, ai do të numërohej te latenca e pyetjes së parë.
+    get_embedding_model()
 
     for item in selected:
         previous = rows.get(item["id"])
