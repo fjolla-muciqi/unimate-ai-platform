@@ -689,7 +689,7 @@ def seed_documents(db: Session, admin: User) -> list[Document]:
                 title=spec["title"],
                 description=spec["description"],
                 file_name=spec["file_name"],
-                file_path=str(file_path),
+                file_path=file_path.as_posix(),
                 document_type=spec["document_type"],
                 academic_year=spec["academic_year"],
                 uploaded_by=admin.id,

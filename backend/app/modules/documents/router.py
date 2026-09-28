@@ -129,7 +129,9 @@ def upload_document(
         title=title,
         description=description,
         file_name=original_name,
-        file_path=str(file_path),
+        # Gjithmonë me "/": një shteg Windows-i nuk hapet në Linux,
+        # dhe API-ja mund të ekzekutohet në të dyja.
+        file_path=file_path.as_posix(),
         document_type=document_type,
         academic_year=academic_year,
         uploaded_by=current_user.id,
