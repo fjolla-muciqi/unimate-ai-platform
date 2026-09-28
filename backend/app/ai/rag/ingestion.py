@@ -1,8 +1,7 @@
 import hashlib
 import logging
-from datetime import datetime
 
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.ai.rag.chunking import split_text_into_chunks
@@ -11,6 +10,7 @@ from app.ai.rag.vector_store import index_document_chunks
 from app.core.database import SessionLocal
 from app.models.document import Document, DocumentStatus
 from app.models.document_chunk import DocumentChunk
+from app.core.clock import utcnow
 
 
 logger = logging.getLogger(__name__)
@@ -81,6 +81,40 @@ def ingest_document(
     return total_chunks
 
 
+INTERRUPTED_DETAIL = (
+    "Përpunimi u ndërpre nga rinisja e serverit. "
+    "Shtyp Ri-indekso për ta nisur sërish."
+)
+
+
+def recover_interrupted_documents(db: Session) -> int:
+    """Shënon si FAILED dokumentet që një rinisje i la përgjysmë.
+
+    Ingestimi ekzekutohet si BackgroundTask brenda procesit të API-t.
+    Nëse procesi ndalet ndërkohë, askush nuk e rimerr punën dhe
+    dokumenti mbetet PENDING ose PROCESSING përgjithmonë. Thirret
+    një herë para nisjes së serverit, kur asnjë ingestim nuk mund të
+    jetë duke punuar ende. Kthen numrin e dokumenteve të rikuperuara.
+    """
+
+    stuck = db.scalars(
+        select(Document).where(
+            Document.is_active.is_(True),
+            Document.status.in_(
+                [DocumentStatus.PENDING, DocumentStatus.PROCESSING]
+            ),
+        )
+    ).all()
+
+    for document in stuck:
+        document.status = DocumentStatus.FAILED
+        document.status_detail = INTERRUPTED_DETAIL
+
+    db.commit()
+
+    return len(stuck)
+
+
 def ingest_document_in_background(document_id: int) -> None:
     """Ingestimi që nis pas ngarkimit të dokumentit.
 
@@ -130,7 +164,7 @@ def ingest_document_in_background(document_id: int) -> None:
         document.status = DocumentStatus.INDEXED
         document.status_detail = None
         document.chunk_count = total_chunks
-        document.indexed_at = datetime.utcnow()
+        document.indexed_at = utcnow()
 
         db.commit()
 

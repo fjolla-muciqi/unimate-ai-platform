@@ -1,9 +1,13 @@
 """Chunking dhe retrieval, pa Qdrant dhe pa embeddings reale."""
 
 from app.ai.rag.chunking import split_text_into_chunks
-from app.ai.rag.ingestion import create_content_hash
+from app.ai.rag.ingestion import (
+    INTERRUPTED_DETAIL,
+    create_content_hash,
+    recover_interrupted_documents,
+)
 from app.ai.rag import retriever
-from app.models.document import Document
+from app.models.document import Document, DocumentStatus
 
 
 def test_empty_text_produces_no_chunks():
@@ -136,3 +140,36 @@ def test_retrieved_chunk_carries_document_metadata(
     assert chunk.file_name == "rregullore.pdf"
     assert chunk.document_type == "REGULATION"
     assert chunk.score == 0.77
+
+
+def test_interrupted_documents_are_marked_failed(db_session, admin_user):
+    """Një rinisje gjatë ingestimit nuk duhet ta lërë dokumentin
+    përgjithmonë "në përpunim"."""
+
+    def make(title, status, is_active=True):
+        document = Document(
+            title=title,
+            file_name=f"{title}.pdf",
+            file_path=f"uploads/documents/{title}.pdf",
+            document_type="REGULATION",
+            uploaded_by=admin_user.id,
+            status=status,
+            is_active=is_active,
+        )
+        db_session.add(document)
+        return document
+
+    pending = make("pending", DocumentStatus.PENDING)
+    processing = make("processing", DocumentStatus.PROCESSING)
+    indexed = make("indexed", DocumentStatus.INDEXED)
+    deleted = make("deleted", DocumentStatus.PENDING, is_active=False)
+    db_session.commit()
+
+    assert recover_interrupted_documents(db_session) == 2
+
+    assert pending.status == DocumentStatus.FAILED
+    assert processing.status == DocumentStatus.FAILED
+    assert pending.status_detail == INTERRUPTED_DETAIL
+    assert indexed.status == DocumentStatus.INDEXED
+    # Dokumentet e fshira nuk shfaqen askund, s'ka pse të preken.
+    assert deleted.status == DocumentStatus.PENDING

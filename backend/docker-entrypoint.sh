@@ -39,6 +39,11 @@ done
 echo "[entrypoint] Po aplikoj migrimet..."
 alembic upgrade head
 
+# Para seed-it: dokumentet demo të shënuara FAILED i ri-indekson vetë
+# seed-i; të tjerat i sheh administratori me arsyen te paneli.
+echo "[entrypoint] Po kontrolloj dokumentet e ndërprera..."
+python -m scripts.recover_documents
+
 if [ "${SEED_ON_STARTUP:-1}" = "1" ]; then
     echo "[entrypoint] Po mbush të dhënat demo..."
 
