@@ -152,6 +152,16 @@ export interface Notification {
   is_active: boolean;
 }
 
+export interface Program {
+  id: number;
+  name: string;
+  degree_level: string;
+  specialization: string | null;
+  total_ects: number;
+  duration_years: number;
+  description: string | null;
+}
+
 export interface Professor {
   id: number;
   first_name: string;

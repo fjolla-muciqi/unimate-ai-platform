@@ -14,6 +14,7 @@ import {
   LogOut,
   MessageSquare,
   Presentation,
+  Settings2,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -80,6 +81,12 @@ const NAV_ITEMS: NavItem[] = [
     roles: ["ADMIN"],
   },
   {
+    href: "/admin/manage",
+    label: "Menaxhimi",
+    icon: Settings2,
+    roles: ["ADMIN"],
+  },
+  {
     href: "/analytics",
     label: "Analitika",
     icon: BarChart3,
@@ -116,6 +123,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     (item) => !item.roles || item.roles.includes(user.role),
   );
 
+  // Vetëm lidhja më specifike theksohet: te /admin/manage ndizet
+  // "Menaxhimi", jo edhe "Administrimi".
+  const activeHref = visible
+    .filter(
+      (item) =>
+        pathname === item.href || pathname.startsWith(`${item.href}/`),
+    )
+    .reduce<string | null>(
+      (best, item) =>
+        best === null || item.href.length > best.length ? item.href : best,
+      null,
+    );
+
   const fullName = `${user.first_name} ${user.last_name}`;
 
   return (
@@ -132,9 +152,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <nav className="flex-1 space-y-1 p-3">
           {visible.map((item) => {
-            const active =
-              pathname === item.href ||
-              pathname.startsWith(`${item.href}/`);
+            const active = item.href === activeHref;
 
             return (
               <Link
@@ -208,7 +226,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Navigimi mobil: i njëjti rend si te shiriti anësor. */}
         <nav className="flex gap-1 overflow-x-auto border-b bg-card px-3 py-2 lg:hidden">
           {visible.map((item) => {
-            const active = pathname === item.href;
+            const active = item.href === activeHref;
 
             return (
               <Link

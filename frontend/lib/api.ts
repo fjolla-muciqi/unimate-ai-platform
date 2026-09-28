@@ -15,6 +15,7 @@ import type {
   ProfessorCourse,
   ProfessorDashboard,
   ProfessorStudent,
+  Program,
   Schedule,
   UniDocument,
   User,
@@ -110,6 +111,40 @@ async function request<T>(
 
   return (await response.json()) as T;
 }
+
+/** CRUD-i administrativ: çdo burim ndjek të njëjtën formë REST. */
+function resource<T>(path: string) {
+  return {
+    list: (): Promise<T[]> => request<T[]>(path),
+
+    create: (payload: Record<string, unknown>): Promise<T> =>
+      request<T>(path, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+
+    update: (id: number, payload: Record<string, unknown>): Promise<T> =>
+      request<T>(`${path}/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      }),
+
+    remove: (id: number): Promise<void> =>
+      request<void>(`${path}/${id}`, { method: "DELETE" }),
+  };
+}
+
+export type Resource<T> = ReturnType<typeof resource<T>>;
+
+export const admin = {
+  courses: resource<Course>("/api/courses"),
+  schedules: resource<Schedule>("/api/schedules"),
+  exams: resource<Exam>("/api/exams"),
+  // Pa `only_upcoming`, admini sheh edhe afatet që kanë kaluar.
+  deadlines: resource<Deadline>("/api/deadlines"),
+  notifications: resource<Notification>("/api/notifications"),
+  programs: resource<Program>("/api/programs"),
+};
 
 export const api = {
   async login(email: string, password: string): Promise<string> {
