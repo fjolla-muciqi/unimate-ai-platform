@@ -18,6 +18,7 @@ from app.ai.llm.client import get_anthropic_client
 from app.ai.rag.retriever import retrieve_context
 from app.core.config import settings
 from app.models.course import Course
+from app.models.student_profile import StudentProfile
 
 
 MAX_MATERIAL_CHARS = 12000
@@ -43,6 +44,26 @@ class Flashcard(BaseModel):
 class FlashcardSet(BaseModel):
     topic: str
     cards: list[Flashcard]
+
+
+def level_for_student(profile: StudentProfile | None) -> str:
+    """Niveli i shpjegimit kur studenti nuk kërkon një shprehimisht.
+
+    Viti akademik është treguesi më i mirë që kemi për njohuritë e
+    studentit: në vitin e parë mungojnë bazat që lëndët e mëvonshme i
+    marrin të mirëqena. Profesori dhe admini marrin nivelin e mesëm.
+    """
+
+    if profile is None:
+        return "intermediate"
+
+    if profile.academic_year <= 1:
+        return "beginner"
+
+    if profile.academic_year >= 3:
+        return "advanced"
+
+    return "intermediate"
 
 
 TUTOR_SYSTEM_PROMPT = """\

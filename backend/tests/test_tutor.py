@@ -225,3 +225,39 @@ def test_tutor_tools_report_missing_material_without_artifact(
 
     assert "Nuk gjeta material" in result
     assert context.artifacts == []
+
+
+@pytest.mark.parametrize(
+    ("academic_year", "expected"),
+    [(1, "beginner"), (2, "intermediate"), (3, "advanced"), (4, "advanced")],
+)
+def test_level_follows_the_academic_year(academic_year, expected):
+    profile = SimpleNamespace(academic_year=academic_year)
+
+    assert tutor_agent.level_for_student(profile) == expected
+
+
+def test_level_without_a_student_profile_is_intermediate():
+    assert tutor_agent.level_for_student(None) == "intermediate"
+
+
+def test_explain_tool_adapts_to_the_student_unless_asked_otherwise(
+    monkeypatch, context
+):
+    levels = []
+
+    monkeypatch.setattr(
+        tutor_agent,
+        "explain_topic",
+        lambda **kwargs: levels.append(kwargs["level"]) or "ok",
+    )
+
+    # Studenti i fixture-it është në vitin e dytë.
+    context.profile.academic_year = 1
+    execute_tool("explain_topic", {"topic": "pemët"}, context)
+
+    execute_tool(
+        "explain_topic", {"topic": "pemët", "level": "advanced"}, context
+    )
+
+    assert levels == ["beginner", "advanced"]

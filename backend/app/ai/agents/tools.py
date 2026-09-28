@@ -344,7 +344,11 @@ TOOL_DEFINITIONS: list[dict] = [
                 },
                 "level": {
                     "type": "string",
-                    "description": "Niveli i shpjegimit.",
+                    "description": (
+                        "Niveli i shpjegimit. Jepe vetëm kur studenti "
+                        "e kërkon shprehimisht (p.sh. 'shpjegoma thjesht'); "
+                        "përndryshe përcaktohet nga viti i tij akademik."
+                    ),
                     "enum": ["beginner", "intermediate", "advanced"],
                 },
                 "summarize": {
@@ -474,7 +478,10 @@ def _run_tutor_explain(
         topic=topic,
         db=context.db,
         course_code=course_code,
-        level=tool_input.get("level", "intermediate"),
+        level=(
+            tool_input.get("level")
+            or tutor_agent.level_for_student(context.profile)
+        ),
     )
 
 
