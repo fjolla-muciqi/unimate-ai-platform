@@ -46,4 +46,5 @@ next-env.d.ts
 npm-debug.log*
 
 # Modeli i embeddings i ruajtur lokalisht
-models/
+/models/
+backend/models/
