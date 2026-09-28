@@ -1,5 +1,6 @@
 import type {
   AdminOverview,
+  AdminUser,
   AnalyticsOverview,
   AuditLog,
   AuditSummaryItem,
@@ -10,6 +11,7 @@ import type {
   Dashboard,
   Deadline,
   Exam,
+  MyProfile,
   Notification,
   Professor,
   ProfessorCourse,
@@ -144,6 +146,29 @@ export const admin = {
   deadlines: resource<Deadline>("/api/deadlines"),
   notifications: resource<Notification>("/api/notifications"),
   programs: resource<Program>("/api/programs"),
+
+  users(filters: { role?: string; search?: string } = {}): Promise<AdminUser[]> {
+    const query = new URLSearchParams();
+
+    if (filters.role) {
+      query.set("role", filters.role);
+    }
+
+    if (filters.search) {
+      query.set("search", filters.search);
+    }
+
+    const suffix = query.toString() ? `?${query}` : "";
+
+    return request<AdminUser[]>(`/api/admin/users${suffix}`);
+  },
+
+  setUserActive(id: number, isActive: boolean): Promise<AdminUser> {
+    return request<AdminUser>(`/api/admin/users/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ is_active: isActive }),
+    });
+  },
 };
 
 export const api = {
@@ -185,6 +210,27 @@ export const api = {
 
   me(): Promise<User> {
     return request<User>("/api/auth/me");
+  },
+
+  changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    return request<void>("/api/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify({
+        current_password: currentPassword,
+        new_password: newPassword,
+      }),
+    });
+  },
+
+  myProfile(): Promise<MyProfile> {
+    return request<MyProfile>("/api/student/me/profile");
+  },
+
+  updateMyProfile(language: MyProfile["preferred_language"]): Promise<MyProfile> {
+    return request<MyProfile>("/api/student/me/profile", {
+      method: "PATCH",
+      body: JSON.stringify({ preferred_language: language }),
+    });
   },
 
   dashboard(): Promise<Dashboard> {

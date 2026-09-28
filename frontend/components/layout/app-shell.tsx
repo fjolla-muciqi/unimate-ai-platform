@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Presentation,
   Settings2,
+  UserCog,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -92,6 +93,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: BarChart3,
     roles: ["ADMIN"],
   },
+  { href: "/profile", label: "Profili im", icon: UserCog },
 ];
 
 const ROLE_LABELS: Record<UserRole, string> = {

@@ -9,6 +9,20 @@ export interface User {
   is_active: boolean;
 }
 
+export interface AdminUser extends User {
+  created_at: string;
+}
+
+export interface MyProfile {
+  full_name: string;
+  email: string;
+  student_number: string;
+  program_name: string | null;
+  academic_year: number;
+  semester: number;
+  preferred_language: "sq" | "en";
+}
+
 export interface Source {
   number: number;
   document_id: number | null;

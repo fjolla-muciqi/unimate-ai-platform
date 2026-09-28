@@ -8,6 +8,7 @@ import {
   type FieldDef,
   type FormValues,
 } from "@/components/admin/resource-manager";
+import { UsersManager } from "@/components/admin/users-manager";
 import { PageHeader } from "@/components/layout/page-header";
 import { ErrorState, LoadingState } from "@/components/layout/states";
 import { Badge } from "@/components/ui/badge";
@@ -242,7 +243,7 @@ export default function ManagePage() {
     <div className="space-y-6">
       <PageHeader
         title="Menaxhimi akademik"
-        description="Lëndët, orari, provimet, afatet dhe njoftimet. Ndryshimet i sheh menjëherë edhe asistenti AI."
+        description="Lëndët, orari, provimet, afatet, njoftimet dhe llogaritë. Ndryshimet i sheh menjëherë edhe asistenti AI."
       />
 
       <Tabs defaultValue="courses" className="space-y-6">
@@ -252,6 +253,7 @@ export default function ManagePage() {
           <TabsTrigger value="exams">Provimet</TabsTrigger>
           <TabsTrigger value="deadlines">Afatet</TabsTrigger>
           <TabsTrigger value="notifications">Njoftimet</TabsTrigger>
+          <TabsTrigger value="users">Përdoruesit</TabsTrigger>
         </TabsList>
 
         <TabsContent value="courses">
@@ -479,6 +481,10 @@ export default function ManagePage() {
               },
             ]}
           />
+        </TabsContent>
+
+        <TabsContent value="users">
+          <UsersManager />
         </TabsContent>
       </Tabs>
     </div>

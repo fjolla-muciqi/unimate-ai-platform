@@ -39,6 +39,7 @@ const EVENT_LABELS: Record<string, string> = {
   prompt_injection_detected: "Prompt injection",
   unauthorized_access_attempt: "Akses i paautorizuar",
   output_blocked: "Përgjigje e bllokuar",
+  user_status_changed: "Ndryshim statusi llogarie",
 };
 
 function StatCard({
