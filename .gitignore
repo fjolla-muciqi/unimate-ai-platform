@@ -52,3 +52,6 @@ backend/models/
 # Playwright
 frontend/test-results/
 frontend/playwright-report/
+
+# Përgjigjet e pjesëmarrësve mbeten lokale (anonime, por jo për repo publik)
+backend/evaluation/results/usability/*.csv

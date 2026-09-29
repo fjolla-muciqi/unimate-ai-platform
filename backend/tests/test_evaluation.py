@@ -19,6 +19,12 @@ from evaluation.scoring import (
     routing_scores,
     source_rank,
 )
+from evaluation.usability_analysis import (
+    analyse,
+    read_responses,
+    sus_adjective,
+    sus_score,
+)
 from scripts.demo_documents import DEMO_DOCUMENTS
 
 
@@ -225,3 +231,49 @@ def test_every_question_has_something_to_check():
 def test_baseline_questions_have_facts():
     assert baseline_items()
     assert all(item.get("facts") for item in baseline_items())
+
+
+# --- Studimi i përdorshmërisë --------------------------------------
+
+def test_sus_score_follows_the_standard_formula():
+    # Përgjigje neutrale kudo japin mesin e shkallës.
+    assert sus_score([3] * 10) == 50.0
+    # Pozitivet 5, negativet 1: rezultati maksimal.
+    assert sus_score([5, 1] * 5) == 100.0
+    assert sus_score([1, 5] * 5) == 0.0
+
+    with pytest.raises(ValueError):
+        sus_score([3] * 9)
+
+
+def test_sus_adjectives_follow_bangor():
+    assert sus_adjective(90) == "shkëlqyeshëm"
+    assert sus_adjective(75) == "mirë"
+    assert sus_adjective(60) == "në rregull"
+
+
+def test_forms_export_is_read_by_position_and_needs_consent(tmp_path):
+    header = ["Timestamp", "Kodi", "Pëlqimi", "Statusi", "AI"] + [
+        f"q{index}" for index in range(5, 22)
+    ]
+    agreed = ["t", "P01", "Pranoj", "Student bachelor", "Çdo javë"] + [
+        "5", "1"
+    ] * 5 + ["4", "5", "3", "4", "5", "Burimet", ""]
+    refused = ["t", "P02", "", "Student bachelor", "Rrallë"] + ["3"] * 15 + ["", ""]
+
+    path = tmp_path / "pergjigjet.csv"
+    path.write_text(
+        "\n".join(",".join(row) for row in (header, agreed, refused)),
+        encoding="utf-8",
+    )
+
+    participants = read_responses(path)
+
+    # Pjesëmarrësi pa pëlqim nuk numërohet.
+    assert [item["code"] for item in participants] == ["P01"]
+
+    result = analyse(participants, [])
+
+    assert result["sus"]["mean"] == 100.0
+    assert result["trust"][1]["agree_share"] == 1.0
+    assert result["comments"]["liked"] == ["Burimet"]
