@@ -1,0 +1,127 @@
+{
+  "generated_at": "2026-09-29T13:54:39",
+  "model": "claude-sonnet-5",
+  "system": "Ti je asistent virtual i një universiteti. Përgjigju shkurt pyetjeve të studentëve në gjuhën e pyetjes. Nëse nuk e di përgjigjen, thuaje sinqerisht.",
+  "rows": [
+    {
+      "id": "A01",
+      "question": "Sa herë mund ta jap një provim sipas rregullores?",
+      "category": "academic",
+      "facts_ok": false,
+      "admits_missing": false,
+      "latency_ms": 9996,
+      "cost_usd": 0.003994,
+      "answer": "Kjo varet nga rregullorja e brendshme e universitetit tënd, prandaj nuk mund të jap një numër të saktë pa e ditur institucionin konkret. Zakonisht universitetet lejojnë 2-3 përpjekje (afati i rregullt + një ose dy afate rikuperimi), por disa kanë rregulla të tjera (p.sh. provim me komision pas disa dështimeve).\n\nKëshillohem të kontrollosh:\n- Rregulloren e Studimeve të fakultetit tënd (zakonisht e publikuar në faqen zyrtare).\n- Sekretarinë mësimore ose zyrën e studentëve, që mund të të japin përgjigje të saktë për rastin tënd specifik.\n\nNëse më jep emrin e universitetit/fakultetit, mund të përpiqem të të ndihmoj më konkretisht nëse kam informacion."
+    },
+    {
+      "id": "A02",
+      "question": "Sa kredite ECTS duhen për t'u diplomuar?",
+      "category": "academic",
+      "facts_ok": true,
+      "admits_missing": false,
+      "latency_ms": 9947,
+      "cost_usd": 0.004196,
+      "answer": "Numri i krediteve ECTS të nevojshme për diplomim ndryshon në varësi të:\n\n- **Nivelit të studimeve**: Bachelor zakonisht kërkon **180 ECTS** (3 vjet), ndërsa Master zakonisht kërkon **120 ECTS** (2 vjet) ose **60 ECTS** (1 vit, për programe të integruara/të shkurtra).\n- **Universitetit dhe programit specifik** që ndiqni, pasi disa programe mund të kenë kërkesa të ndryshme.\n\nPër informacion të saktë dhe të përditësuar për programin tuaj konkret, ju rekomandoj të kontrolloni:\n- Planin mësimor (kurrikulën) të fakultetit tuaj\n- Zyrën e regjistrimit/sekretarinë mësimore\n- Portalin online të universitetit\n\nNëse më tregoni universitetin dhe programin specifik ku studioni, mund të përpiqem t'ju ndihmoj më konkretisht, megjithëse për informacion zyrtar është më mirë të verifikoni drejtpërdrejt me institucionin tuaj."
+    },
+    {
+      "id": "A03",
+      "question": "Kur bëhet regjistrimi i semestrit dimëror?",
+      "category": "academic",
+      "facts_ok": false,
+      "admits_missing": false,
+      "latency_ms": 6275,
+      "cost_usd": 0.002466,
+      "answer": "Regjistrimi i semestrit dimëror zakonisht bëhet në muajt shtator-tetor, por data e saktë ndryshon nga universiteti në universitet dhe nga viti akademik.\n\nPër të marrë informacionin e saktë dhe të përditësuar, të lutem kontrollo:\n- Kalendarin akademik të universitetit tënd\n- Faqen zyrtare të universitetit\n- Zyrën e Regjistrimit të Studentëve (Rektoratin ose Dekanatin)\n\nNëse më thua emrin e universitetit tënd, mund të të orientoj më mirë ku të kërkosh këtë informacion."
+    },
+    {
+      "id": "A05",
+      "question": "Si formohet nota përfundimtare e një lënde?",
+      "category": "academic",
+      "facts_ok": false,
+      "admits_missing": false,
+      "latency_ms": 8024,
+      "cost_usd": 0.003218,
+      "answer": "Nota përfundimtare e një lënde zakonisht formohet duke kombinuar disa komponentë, si për shembull:\n\n- **Provimi final** – zakonisht pesha më e madhe (p.sh. 40-60%)\n- **Detyra/projekte** gjatë semestrit\n- **Testet e ndërmjetme (midterm)**\n- **Pjesëmarrja dhe aktiviteti në klasë**\n- **Punë praktike/laboratorike** (nëse lënda e ka)\n\nPërqindja e saktë e secilit komponent ndryshon nga lënda në lëndë dhe nga universiteti në universitet, prandaj duhet kontaktuar sekretarinë e fakultetit tënd ose të kontrollosh syllabusin/programin e lëndës specifike, pasi unë nuk kam informacion të saktë për universitetin tënd konkret."
+    },
+    {
+      "id": "A07",
+      "question": "How many ECTS credits can be recognized when I transfer from another university?",
+      "category": "academic",
+      "facts_ok": false,
+      "admits_missing": false,
+      "latency_ms": 10985,
+      "cost_usd": 0.004204,
+      "answer": "Kjo varet nga rregullorja specifike e universitetit tuaj dhe nga marrëveshjet e njohjes së kredive mes institucioneve. Në përgjithësi:\n\n- Numri i kredive ECTS që njihen përcaktohet pas krahasimit të programit/lëndëve të ndjekura më parë me kurrikulën e re.\n- Zakonisht kërkohet një kërkesë zyrtare pranë zyrës së regjistrarit ose zyrës për njohjen e kredive, bashkë me transkriptën e notave dhe syllabuset e lëndëve.\n- Një komision akademik e vlerëson përputhshmërinë e përmbajtjes, orëve dhe rezultateve të të nxënit.\n- Shpesh ka një kufi maksimal (p.sh. deri në 50-60% të kredive totale të programit) që mund të transferohen.\n\nJu rekomandoj të kontaktoni **zyrën e regjistrimit/administratën akademike** të universitetit tuaj për informacion të saktë dhe procedurën specifike, pasi nuk kam të dhëna të sakta për rastin tuaj konkret."
+    },
+    {
+      "id": "A08",
+      "question": "Cila është literatura e lëndës CS201?",
+      "category": "academic",
+      "facts_ok": false,
+      "admits_missing": false,
+      "latency_ms": 6918,
+      "cost_usd": 0.002812,
+      "answer": "Nuk kam informacion specifik për lëndën \"CS201\" pasi kodet e lëndëve dhe literatura ndryshojnë sipas universitetit dhe programit të studimit.\n\nTë lutem kontrollo:\n- **Syllabusin zyrtar** të lëndës të publikuar nga universiteti/fakulteti\n- **Platformën online** të universitetit (p.sh. sistemi i menaxhimit të kursit)\n- **Profesorin ose asistentin** e lëndës për listën e saktë të literaturës\n\nNëse më jep më shumë detaje (p.sh. emrin e universitetit, fakultetin, ose përshkrimin e lëndës), mund të të ndihmoj më mirë me sugjerime të përgjithshme."
+    },
+    {
+      "id": "A12",
+      "question": "Kush e ligjëron lëndën CS202?",
+      "category": "academic",
+      "facts_ok": false,
+      "admits_missing": false,
+      "latency_ms": 5502,
+      "cost_usd": 0.002194,
+      "answer": "Nuk kam informacion të saktë se kush e ligjëron lëndën CS202, pasi kjo varet nga universiteti specifik dhe semestri aktual. Të sugjeroj të kontrollosh:\n\n- Platformën online të universitetit (p.sh. sistemin e menaxhimit të studimeve)\n- Sillabusin zyrtar të lëndës\n- Sekretarinë e fakultetit tënd\n\nNëse më jep emrin e universitetit, mund të të ndihmoj me udhëzime më specifike se ku ta gjesh këtë informacion."
+    },
+    {
+      "id": "A13",
+      "question": "Deri në çfarë ore është e hapur biblioteka të premten?",
+      "category": "academic",
+      "facts_ok": false,
+      "admits_missing": false,
+      "latency_ms": 5118,
+      "cost_usd": 0.002378,
+      "answer": "Nuk kam informacion të saktë për orarin e bibliotekës së universitetit tuaj, pasi kjo mund të ndryshojë nga një institucion në tjetrin.\n\nTë sugjeroj të kontrollosh:\n- Faqen zyrtare të universitetit\n- Rrjetet sociale të bibliotekës\n- Të kontaktosh drejtpërdrejt me bibliotekën\n\nNëse më jep emrin e universitetit, mund të përpiqem të ndihmoj më konkretisht, megjithëse për informacion të përditësuar është më mirë të verifikosh me burimin zyrtar."
+    },
+    {
+      "id": "A14",
+      "question": "Cilat janë kushtet për të aplikuar për bursë akademike?",
+      "category": "academic",
+      "facts_ok": false,
+      "admits_missing": false,
+      "latency_ms": 13980,
+      "cost_usd": 0.00525,
+      "answer": "Kushtet për bursa akademike zakonisht ndryshojnë nga një universitet në tjetrin, por në përgjithësi përfshijnë:\n\n1. **Rezultate të larta akademike** – mesatare e caktuar notash (p.sh. mbi 8 ose 9) në vitin/semestrin paraardhës.\n2. **Status i rregullt student** – të jesh i regjistruar me kohë të plotë dhe pa lëndë të mbetura/të papërfunduara.\n3. **Dokumentacion i kërkuar** – certifikatë notash, kopje ID/pasaportë, formular aplikimi, ndonjëherë letra motivimi ose rekomandimi.\n4. **Afati i aplikimit** – të respektohet data limite e shpallur nga universiteti.\n5. **Kritere shtesë** – në disa raste kërkohet gjendje ekonomike (për bursa sociale) ose pjesëmarrje në aktivitete jashtëshkollore.\n\nMeqë kushtet e sakta varen nga rregulloret specifike të institucionit tënd, të rekomandoj të kontrollosh:\n- Faqen zyrtare të universitetit / fakultetit\n- Zyrën e Studentëve ose Dekanatin\n- Njoftimet periodike për bursa (shpesh publikohen në fillim të semestrit)\n\nNëse më thua emrin e universitetit tënd, mund të të ndihmoj më konkretisht!"
+    },
+    {
+      "id": "S01",
+      "question": "Kur e kam provimin e radhës?",
+      "category": "schedule",
+      "facts_ok": false,
+      "admits_missing": false,
+      "latency_ms": 6643,
+      "cost_usd": 0.002308,
+      "answer": "Nuk kam mundësi të di orarin tënd specifik të provimeve, pasi nuk kam qasje në të dhënat personale apo sistemin akademik të universitetit tënd.\n\nPër të gjetur informacionin e saktë, të sugjeroj të:\n- Kontrollosh portalin/sistemin online të studentit\n- Shikosh njoftimet zyrtare të fakultetit\n- Kontaktosh sekretarinë e departamentit tënd\n- Pyesësh profesorin e lëndës përkatëse\n\nA ka ndonjë gjë tjetër ku mund të të ndihmoj?"
+    },
+    {
+      "id": "S03",
+      "question": "When is my Algorithms final exam and in which room?",
+      "category": "schedule",
+      "facts_ok": false,
+      "admits_missing": false,
+      "latency_ms": 4154,
+      "cost_usd": 0.002502,
+      "answer": "I don't have access to your university's specific records, class schedules, or exam timetables, so I can't tell you the exact date, time, or room for your Algorithms final exam.\n\nTo find this information, I'd recommend:\n\n- **Checking your university's student portal** or online course management system (e.g., Moodle, Canvas, Blackboard)\n- **Looking at the official exam schedule** posted by the registrar's office\n- **Contacting your course instructor or TA directly** via email\n- **Checking your department's website** or notice board\n- **Asking classmates** or checking group chats for the course\n\nIf you tell me which university you attend, I might be able to point you toward the right website or office to contact, though I still won't have access to the actual schedule details."
+    },
+    {
+      "id": "V03",
+      "question": "What is my student number?",
+      "category": "services",
+      "facts_ok": false,
+      "admits_missing": false,
+      "latency_ms": 3173,
+      "cost_usd": 0.001552,
+      "answer": "I don't have access to your personal records, so I don't know your student number. \n\nTo find it, you could check:\n- Your university acceptance/enrollment letter\n- Your student ID card\n- Your university's online portal or student account\n- Your university email confirmation\n- By contacting your university's registrar or admissions office directly\n\nIf you let me know what specific information you're trying to find or what you need the student number for, I might be able to help guide you to the right resource."
+    }
+  ]
+}

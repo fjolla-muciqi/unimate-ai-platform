@@ -504,6 +504,41 @@ kapitullit të vlerësimit të performancës:
 Paneli `/admin` shton numrat e platformës dhe regjistrin e sigurisë:
 sa kërkesa u bllokuan nga Guardrail Agent-i dhe pse.
 
+## Vlerësimi
+
+`backend/evaluation/` mat pyetjet kërkimore të temës mbi 35 pyetje të
+etiketuara (shqip dhe anglisht). Raporti i plotë:
+[`backend/evaluation/results/REPORT.md`](backend/evaluation/results/REPORT.md).
+
+| Treguesi | Rezultati |
+|---|---:|
+| Routing: agjentët e pritur u aktivizuan | 97% (34/35) |
+| Përgjigje me faktet e sakta | 100% |
+| Pyetje nga dokumentet që citojnë dokumentin e saktë | 100% |
+| Pyetje pa përgjigje ku sistemi e pranoi mungesën, pa shpikur | 100% |
+| Sulme të bllokuara nga Guardrail-i | 100% |
+| Retrieval: faqja e saktë e para / mes 3 të parave | 82% / 100% |
+| **Multi-agent + RAG kundrejt chatbot-it të vetëm** (i njëjti model) | **100% kundrejt 8%** |
+| Koha mediane e përgjigjes | 7.9 s |
+| Kostoja e të gjithë vlerësimit | < 1 $ |
+
+Dy ablacione tregojnë nga vjen saktësia e retrieval-it: ndarja sipas
+fjalive ngriti faqen e saktë të parën nga 41% në 64%, dhe kërkimi
+hibrid nga 64% në 82%.
+
+**Kufizimet:** dataset-i është i vogël; saktësia kontrollohet me fjalë
+kyç, jo me vlerësim njerëzor; pesha e kërkimit hibrid u zgjodh mbi të
+njëjtat pyetje që e matin. Pyetja e vetme e drejtuar gabim (`T04`,
+"përmbledhje e temave të CS203") mori përgjigje të saktë nga Academic
+Agent-i, që lexoi syllabus-in në vend të Tutor-it.
+
+```bash
+docker compose exec api python -m evaluation.run_retrieval      # falas
+docker compose exec api python -m evaluation.run_agents --max-cost 1.2
+docker compose exec api python -m evaluation.run_baseline --max-cost 0.2
+docker compose exec api python -m evaluation.report
+```
+
 ## Dallimet nga stack-u i propozuar fillimisht
 
 Specifikimi i temës rekomandon OpenAI/Azure OpenAI, LangGraph, Redis
