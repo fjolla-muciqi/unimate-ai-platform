@@ -16,6 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.audit import record_event
+from app.core import teaching
 from app.core.database import get_db
 from app.core.security import (
     get_current_user,
@@ -159,9 +160,14 @@ def resolve_scope(
 
 
 def teaches_course(professor: Professor, course_id: int, db: Session) -> bool:
-    course = db.get(Course, course_id)
+    """Koordinatori ose profesori i një grupi të lëndës."""
 
-    return course is not None and course.professor_id == professor.id
+    return db.scalar(
+        select(Course.id).where(
+            Course.id == course_id,
+            teaching.teaches_course(professor.id),
+        )
+    ) is not None
 
 
 @router.post(

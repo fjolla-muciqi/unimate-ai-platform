@@ -16,6 +16,7 @@ from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.security import hash_password
 from app.models.course import Course
+from app.models.course_group import CourseGroup
 from app.models.course_prerequisite import CoursePrerequisite
 from app.models.deadline import Deadline
 from app.models.document import Document, DocumentStatus
@@ -780,6 +781,145 @@ def document_scope(db: Session, spec: dict) -> tuple[int | None, int | None]:
     return None, None
 
 
+# Lëndët me më shumë se një grup: kodi -> [(grupi, mbiemri i profesorit)].
+# Lëndët e tjera me profesor marrin vetëm "Grupi A" me koordinatorin.
+EXTRA_GROUPS = {
+    "CS201": [("Grupi A", "Hoxha"), ("Grupi B", "Berisha")],
+}
+
+# Ushtrimet e veçanta të çdo grupi të CS201, të enjten, në orë që nuk
+# përplasen me ligjëratat e përbashkëta të studentit demo.
+GROUP_SCHEDULES = {
+    ("CS201", "Grupi A"): ("Thursday", time(11, 0), time(12, 30), "Lab-1"),
+    ("CS201", "Grupi B"): ("Thursday", time(16, 0), time(17, 30), "Lab-1"),
+}
+
+
+def seed_groups(
+    db: Session,
+    professors: dict[str, Professor],
+    demo_profile: StudentProfile,
+) -> int:
+    """Grupet e lëndëve dhe caktimi i studentëve në to.
+
+    Studentët pa grup shpërndahen me radhë mes grupeve të lëndës, që
+    kohorta e demos të ketë studentë te secili profesor.
+    """
+
+    created = 0
+
+    for course in db.scalars(select(Course).order_by(Course.code)).all():
+        wanted = EXTRA_GROUPS.get(course.code)
+
+        if wanted is None:
+            if course.professor_id is None:
+                continue
+
+            wanted = [("Grupi A", None)]
+
+        for name, last_name in wanted:
+            group = db.scalar(
+                select(CourseGroup).where(
+                    CourseGroup.course_id == course.id,
+                    CourseGroup.name == name,
+                )
+            )
+
+            if group is None:
+                professor = professors.get(last_name) if last_name else None
+                group = CourseGroup(
+                    course_id=course.id,
+                    name=name,
+                    professor_id=(
+                        professor.id if professor else course.professor_id
+                    ),
+                )
+                db.add(group)
+                db.flush()
+                created += 1
+
+            slot = GROUP_SCHEDULES.get((course.code, name))
+
+            if slot is not None:
+                day, start, end, room = slot
+                exists = db.scalar(
+                    select(Schedule).where(
+                        Schedule.group_id == group.id,
+                        Schedule.day_of_week == day,
+                    )
+                )
+
+                if exists is None:
+                    db.add(
+                        Schedule(
+                            course_id=course.id,
+                            group_id=group.id,
+                            day_of_week=day,
+                            start_time=start,
+                            end_time=end,
+                            room=room,
+                        )
+                    )
+
+        groups = db.scalars(
+            select(CourseGroup)
+            .where(CourseGroup.course_id == course.id)
+            .order_by(CourseGroup.name)
+        ).all()
+
+        if not groups:
+            continue
+
+        unassigned = db.scalars(
+            select(Enrollment)
+            .where(
+                Enrollment.course_id == course.id,
+                Enrollment.group_id.is_(None),
+            )
+            .order_by(Enrollment.id)
+        ).all()
+
+        for index, enrollment in enumerate(unassigned):
+            enrollment.group_id = groups[index % len(groups)].id
+
+        # Një bazë e migruar i ka të gjithë studentët te "Grupi A", dhe
+        # grupi i ri do të mbetej bosh. Rishpërndahen një herë, kur një
+        # grup është bosh; studentja demo mbetet te grupi i parë.
+        if course.code in EXTRA_GROUPS:
+            counts = [
+                len(
+                    db.scalars(
+                        select(Enrollment).where(Enrollment.group_id == group.id)
+                    ).all()
+                )
+                for group in groups
+            ]
+
+            if 0 in counts:
+                cohort = db.scalars(
+                    select(Enrollment)
+                    .where(Enrollment.course_id == course.id)
+                    .order_by(Enrollment.id)
+                ).all()
+
+                others = [
+                    enrollment
+                    for enrollment in cohort
+                    if enrollment.student_profile_id != demo_profile.id
+                ]
+
+                for enrollment in cohort:
+                    if enrollment.student_profile_id == demo_profile.id:
+                        enrollment.group_id = groups[0].id
+
+                for index, enrollment in enumerate(others):
+                    enrollment.group_id = groups[(index + 1) % len(groups)].id
+
+    db.flush()
+
+    return created
+
+
 def seed_documents(db: Session, admin: User) -> list[Document]:
     """Krijon PDF-të demo dhe rreshtat përkatës në bazë.
 
@@ -935,6 +1075,7 @@ def main() -> None:
         profile = seed_student_profile(db, student, program)
         enrollments_created = seed_enrollments(db, profile, courses)
         cohort_created = seed_cohort(db, program, courses)
+        groups_created = seed_groups(db, professors, profile)
 
         documents = seed_documents(db, admin)
 
@@ -973,6 +1114,7 @@ def main() -> None:
         print(f"  Njoftime të reja:     {notifications_created}")
         print(f"  Regjistrime të reja:  {enrollments_created}")
         print(f"  Studentë të kohortës: {cohort_created}")
+        print(f"  Grupe të reja:        {groups_created}")
         print(f"  Dokumente demo:       {len(document_ids)}")
         print(f"  Të indeksuara tani:   {indexed}")
 

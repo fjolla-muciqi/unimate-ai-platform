@@ -14,6 +14,7 @@ rregulla të ndryshme — përgjigje e cituar saktë, por e gabuar për të.
 from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
+from app.core.teaching import teaches_course
 from app.models.course import Course
 from app.models.document import Document
 from app.models.professor import Professor
@@ -54,9 +55,7 @@ def accessible_document_ids(user: User, db: Session) -> list[int] | None:
             faculty_id = professor.faculty_id
             course_ids = list(
                 db.scalars(
-                    select(Course.id).where(
-                        Course.professor_id == professor.id
-                    )
+                    select(Course.id).where(teaches_course(professor.id))
                 )
             )
 

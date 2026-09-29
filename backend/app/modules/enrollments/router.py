@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.audit import record_event
 from app.core.database import get_db
+from app.core.teaching import group_belongs_to_course, least_filled_group
 from app.core.security import get_current_user, require_admin
 from app.models.audit_log import AuditEvent
 from app.models.course import Course
@@ -56,9 +57,24 @@ def create_enrollment(
             detail="Course not found.",
         )
 
+    group_id = enrollment_data.group_id
+
+    if not group_belongs_to_course(group_id, course.id, db):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Grupi nuk i përket kësaj lënde.",
+        )
+
+    # Pa grup të zgjedhur, studenti shkon te grupi me më pak studentë,
+    # që të ketë gjithmonë një profesor kur lënda ka grupe.
+    if group_id is None:
+        group = least_filled_group(course.id, db)
+        group_id = group.id if group else None
+
     enrollment = Enrollment(
         student_profile_id=enrollment_data.student_profile_id,
         course_id=enrollment_data.course_id,
+        group_id=group_id,
         status=enrollment_data.status,
     )
 
@@ -178,6 +194,14 @@ def update_enrollment(
     update_data = enrollment_data.model_dump(
         exclude_unset=True
     )
+
+    if not group_belongs_to_course(
+        update_data.get("group_id"), enrollment.course_id, db
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Grupi nuk i përket kësaj lënde.",
+        )
 
     for field, value in update_data.items():
         setattr(enrollment, field, value)

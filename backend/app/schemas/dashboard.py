@@ -82,6 +82,7 @@ class ProfessorStudent(BaseModel):
     academic_year: int
     course_code: str
     course_name: str
+    group_name: str | None = None
 
 
 class ProfessorDashboard(BaseModel):

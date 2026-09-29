@@ -69,3 +69,40 @@ class AdminUserUpdate(BaseModel):
     is_active: bool
 
     model_config = ConfigDict(extra="forbid")
+
+
+class AdminStudentRow(BaseModel):
+    """Një student te lista e administratorit.
+
+    Fushat e profilit janë bosh për studentët që u regjistruan, por
+    ende nuk e kanë plotësuar profilin akademik.
+    """
+
+    user_id: int
+    full_name: str
+    email: str
+    is_active: bool
+    student_profile_id: int | None = None
+    student_number: str | None = None
+    program_id: int | None = None
+    program_name: str | None = None
+    academic_year: int | None = None
+    semester: int | None = None
+    course_count: int = 0
+
+
+class AdminStudentCourse(BaseModel):
+    enrollment_id: int
+    course_id: int
+    code: str
+    name: str
+    semester: int
+    ects: int
+    group_id: int | None
+    group_name: str | None
+    teacher_name: str | None
+    status: str
+
+
+class AdminStudentDetail(AdminStudentRow):
+    courses: list[AdminStudentCourse] = []

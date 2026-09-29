@@ -11,7 +11,9 @@ from datetime import datetime, timezone
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
+from app.core.teaching import student_sees_schedule, teacher_of_enrollment
 from app.models.course import Course
+from app.models.course_group import CourseGroup
 from app.models.deadline import Deadline
 from app.models.enrollment import Enrollment
 from app.models.exam import Exam
@@ -34,17 +36,6 @@ DAY_NAMES_SQ = {
 DAY_ORDER = list(DAY_NAMES_SQ.keys())
 
 
-def _active_courses_query(profile_id: int):
-    return (
-        select(Course)
-        .join(Enrollment, Enrollment.course_id == Course.id)
-        .where(
-            Enrollment.student_profile_id == profile_id,
-            Enrollment.status == "ACTIVE",
-        )
-    )
-
-
 def _format_time_range(start, end) -> str:
     return (
         f"{start.strftime('%H:%M')}-"
@@ -53,20 +44,37 @@ def _format_time_range(start, end) -> str:
 
 
 def answer_courses(profile: StudentProfile, db: Session) -> str:
-    courses = db.scalars(
-        _active_courses_query(profile.id).order_by(
-            Course.semester, Course.name
+    rows = db.execute(
+        select(Course, Enrollment)
+        .join(Enrollment, Enrollment.course_id == Course.id)
+        .where(
+            Enrollment.student_profile_id == profile.id,
+            Enrollment.status == "ACTIVE",
         )
+        .order_by(Course.semester, Course.name)
     ).all()
 
-    if not courses:
+    if not rows:
         return "Studenti nuk është i regjistruar në asnjë lëndë aktive."
 
-    lines = [
-        f"- {course.name} ({course.code}), semestri {course.semester}, "
-        f"{course.ects} ECTS"
-        for course in courses
-    ]
+    courses = [course for course, _ in rows]
+    lines = []
+
+    # Profesori i grupit të studentit, jo çdo profesor i lëndës: kur e
+    # njëjta lëndë jepet nga disa, studenti pyet për të vetin.
+    for course, enrollment in rows:
+        teacher = teacher_of_enrollment(enrollment, course, db)
+        group = db.get(CourseGroup, enrollment.group_id) if enrollment.group_id else None
+
+        details = [f"semestri {course.semester}", f"{course.ects} ECTS"]
+
+        if group is not None:
+            details.append(group.name)
+
+        if teacher is not None:
+            details.append(f"profesori {teacher.full_name}")
+
+        lines.append(f"- {course.name} ({course.code}), " + ", ".join(details))
 
     total_ects = sum(course.ects for course in courses)
 
@@ -89,6 +97,8 @@ def answer_schedule(
         .where(
             Enrollment.student_profile_id == profile.id,
             Enrollment.status == "ACTIVE",
+            # Ligjëratat e përbashkëta dhe ato të grupit të studentit.
+            student_sees_schedule(),
         )
     )
 

@@ -1,11 +1,17 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.teaching import (
+    least_filled_group,
+    student_sees_schedule,
+    teacher_of_enrollment,
+)
 from app.core.security import get_current_user
 from app.models.course import Course
+from app.models.course_group import CourseGroup
 from app.models.deadline import Deadline
 from app.models.document import Document, DocumentStatus
 from app.models.enrollment import Enrollment
@@ -15,7 +21,7 @@ from app.models.program import Program
 from app.models.schedule import Schedule
 from app.models.student_profile import StudentProfile
 from app.models.user import User, UserRole
-from app.schemas.course import CourseResponse
+from app.schemas.course import CourseResponse, StudentCourseResponse
 from app.schemas.dashboard import (
     DashboardExam,
     DashboardProgress,
@@ -65,7 +71,7 @@ def get_student_profile(
 
 @router.get(
     "/courses",
-    response_model=list[CourseResponse],
+    response_model=list[StudentCourseResponse],
 )
 def get_my_courses(
     db: Session = Depends(get_db),
@@ -73,8 +79,8 @@ def get_my_courses(
 ):
     profile = get_student_profile(current_user, db)
 
-    courses = db.scalars(
-        select(Course)
+    rows = db.execute(
+        select(Course, Enrollment)
         .join(
             Enrollment,
             Enrollment.course_id == Course.id,
@@ -89,7 +95,26 @@ def get_my_courses(
         )
     ).all()
 
-    return courses
+    result = []
+
+    for course, enrollment in rows:
+        group = (
+            db.get(CourseGroup, enrollment.group_id)
+            if enrollment.group_id
+            else None
+        )
+        teacher = teacher_of_enrollment(enrollment, course, db)
+
+        result.append(
+            StudentCourseResponse(
+                **CourseResponse.model_validate(course).model_dump(),
+                group_id=enrollment.group_id,
+                group_name=group.name if group else None,
+                teacher_name=teacher.full_name if teacher else None,
+            )
+        )
+
+    return result
 
 
 @router.get(
@@ -115,6 +140,8 @@ def get_my_schedule(
         .where(
             Enrollment.student_profile_id == profile.id,
             Enrollment.status == "ACTIVE",
+            # Ligjëratat e përbashkëta dhe ato të grupit të tij.
+            student_sees_schedule(),
         )
         .order_by(
             Schedule.day_of_week,
@@ -225,9 +252,18 @@ def get_my_dashboard(
     today_slots = (
         db.scalars(
             select(Schedule)
+            .join(
+                Enrollment,
+                and_(
+                    Enrollment.course_id == Schedule.course_id,
+                    Enrollment.student_profile_id == profile.id,
+                    Enrollment.status == "ACTIVE",
+                ),
+            )
             .where(
                 Schedule.course_id.in_(active_course_ids),
                 Schedule.day_of_week == today,
+                student_sees_schedule(),
             )
             .order_by(Schedule.start_time)
         ).all()
@@ -474,10 +510,15 @@ def create_my_profile(
     ).all()
 
     for course in courses:
+        # Te lëndët me disa grupe, studenti shkon te grupi me më pak
+        # studentë; admini mund ta ndryshojë më vonë.
+        group = least_filled_group(course.id, db)
+
         db.add(
             Enrollment(
                 student_profile_id=profile.id,
                 course_id=course.id,
+                group_id=group.id if group else None,
             )
         )
 

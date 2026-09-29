@@ -16,6 +16,14 @@ class Schedule(Base):
         nullable=False,
     )
 
+    # Bosh: ligjëratë e përbashkët për gjithë lëndën. Me grup: vetëm
+    # për studentët dhe profesorin e atij grupi (p.sh. ushtrimet).
+    group_id: Mapped[int | None] = mapped_column(
+        ForeignKey("course_groups.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+
     day_of_week: Mapped[str] = mapped_column(
         String(20),
         nullable=False,

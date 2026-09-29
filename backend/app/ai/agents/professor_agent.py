@@ -3,7 +3,8 @@
 Pasqyra e `academic_agent.py`, por e ndërtuar mbi lëndët që profesori
 **ligjëron**, jo mbi ato ku është i regjistruar. I njëjti agjent dhe të
 njëjtat tools i shërbejnë të dy roleve; ndryshon vetëm burimi i
-filtrimit — `Course.professor_id` në vend të `Enrollment`.
+filtrimit — lëndët dhe grupet që ligjëron (`core/teaching.py`) në vend
+të `Enrollment`.
 
 Kjo është arsyeja pse `ToolContext` mban edhe `profile` edhe
 `professor`: modeli nuk zgjedh kurrë se të dhënat e kujt të lexojë.
@@ -12,13 +13,19 @@ Roli i përcaktuar nga JWT-ja e zgjedh atë para se tool-i të nisë.
 
 from datetime import datetime, timezone
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.ai.agents.academic_agent import (
     DAY_NAMES_SQ,
     DAY_ORDER,
     _format_time_range,
+)
+from app.core.teaching import (
+    count_professor_students,
+    professor_sees_enrollment,
+    professor_sees_schedule,
+    teaches_course,
 )
 from app.models.course import Course
 from app.models.enrollment import Enrollment
@@ -39,7 +46,7 @@ def taught_courses(professor: Professor, db: Session) -> list[Course]:
     return list(
         db.scalars(
             select(Course)
-            .where(Course.professor_id == professor.id)
+            .where(teaches_course(professor.id))
             .order_by(Course.semester, Course.name)
         ).all()
     )
@@ -54,7 +61,8 @@ def answer_courses(professor: Professor, db: Session) -> str:
     lines = [
         f"- {course.name} ({course.code}), semestri {course.semester}, "
         f"{course.ects} ECTS, "
-        f"{count_enrolled(course.id, db)} studentë të regjistruar"
+        f"{count_professor_students(professor.id, course.id, db)} "
+        "studentë në grupet e tij"
         for course in courses
     ]
 
@@ -65,17 +73,6 @@ def answer_courses(professor: Professor, db: Session) -> str:
     )
 
 
-def count_enrolled(course_id: int, db: Session) -> int:
-    return db.scalar(
-        select(func.count())
-        .select_from(Enrollment)
-        .where(
-            Enrollment.course_id == course_id,
-            Enrollment.status == "ACTIVE",
-        )
-    ) or 0
-
-
 def answer_schedule(
     professor: Professor,
     db: Session,
@@ -84,7 +81,7 @@ def answer_schedule(
     query = (
         select(Schedule)
         .join(Course, Course.id == Schedule.course_id)
-        .where(Course.professor_id == professor.id)
+        .where(professor_sees_schedule(professor.id))
     )
 
     if day_of_week:
@@ -137,7 +134,7 @@ def answer_exams(
     query = (
         select(Exam)
         .join(Course, Course.id == Exam.course_id)
-        .where(Course.professor_id == professor.id)
+        .where(teaches_course(professor.id))
     )
 
     if course_code:
@@ -163,7 +160,8 @@ def answer_exams(
         lines.append(
             f"- {exam.course.name} ({exam.course.code}): {exam.exam_type}, "
             f"{exam.exam_date.strftime('%d.%m.%Y %H:%M')}{room}, "
-            f"{count_enrolled(exam.course_id, db)} kandidatë"
+            f"{count_professor_students(professor.id, exam.course_id, db)} "
+            "kandidatë nga grupet e tij"
         )
 
     label = "Provimet e ardhshme" if only_upcoming else "Të gjitha provimet"
@@ -198,9 +196,10 @@ def answer_students(
 ) -> str:
     """Studentët e regjistruar në lëndët e këtij profesori.
 
-    Kufizimi te `Course.professor_id` është i pashmangshëm në query:
-    edhe nëse modeli kërkon një kod lënde që nuk i takon profesorit,
-    filtri i mbetet sipër dhe rezultati del bosh.
+    Kufizimi te grupet e profesorit është i pashmangshëm në query: edhe
+    nëse modeli kërkon një kod lënde që nuk i takon, ose një lëndë që e
+    jep edhe një koleg, filtri i mbetet sipër dhe kthen vetëm studentët
+    e grupeve të tij.
     """
 
     query = (
@@ -215,7 +214,7 @@ def answer_students(
         )
         .join(Course, Course.id == Enrollment.course_id)
         .where(
-            Course.professor_id == professor.id,
+            professor_sees_enrollment(professor.id),
             Enrollment.status == "ACTIVE",
         )
     )
@@ -266,6 +265,5 @@ __all__ = [
     "answer_profile",
     "answer_students",
     "taught_courses",
-    "count_enrolled",
     "NO_COURSES_MESSAGE",
 ]

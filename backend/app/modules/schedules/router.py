@@ -3,6 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.teaching import group_belongs_to_course
 from app.core.security import get_current_user, require_admin
 from app.models.course import Course
 from app.models.schedule import Schedule
@@ -44,8 +45,17 @@ def create_schedule(
             detail="End time must be after start time.",
         )
 
+    if not group_belongs_to_course(
+        schedule_data.group_id, schedule_data.course_id, db
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Grupi nuk i përket kësaj lënde.",
+        )
+
     schedule = Schedule(
         course_id=schedule_data.course_id,
+        group_id=schedule_data.group_id,
         day_of_week=schedule_data.day_of_week,
         start_time=schedule_data.start_time,
         end_time=schedule_data.end_time,
@@ -138,6 +148,16 @@ def update_schedule(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="End time must be after start time.",
+        )
+
+    if not group_belongs_to_course(
+        update_data.get("group_id", schedule.group_id),
+        update_data.get("course_id", schedule.course_id),
+        db,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Grupi nuk i përket kësaj lënde.",
         )
 
     for field, value in update_data.items():

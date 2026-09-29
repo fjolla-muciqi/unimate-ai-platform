@@ -14,16 +14,23 @@ from sqlalchemy.orm import Session
 
 from app.core.audit import record_event
 from app.core.database import get_db
+from app.core.teaching import teacher_of_enrollment
 from app.core.security import require_admin
 from app.models.audit_log import AuditEvent, AuditLog, BLOCKING_EVENTS
 from app.models.course import Course
 from app.models.document import Document, DocumentStatus
+from app.models.enrollment import Enrollment
+from app.models.course_group import CourseGroup
 from app.models.document_chunk import DocumentChunk
 from app.models.message import Message
 from app.models.program import Program
+from app.models.student_profile import StudentProfile
 from app.models.user import User, UserRole
 from app.schemas.admin import (
     AdminOverview,
+    AdminStudentCourse,
+    AdminStudentDetail,
+    AdminStudentRow,
     AdminUserResponse,
     AdminUserUpdate,
     AuditLogResponse,
@@ -249,3 +256,139 @@ def update_user(
         db.refresh(user)
 
     return user
+
+
+def student_row(
+    user: User,
+    profile: StudentProfile | None,
+    program: Program | None,
+    db: Session,
+) -> AdminStudentRow:
+    course_count = (
+        db.scalar(
+            select(func.count())
+            .select_from(Enrollment)
+            .where(
+                Enrollment.student_profile_id == profile.id,
+                Enrollment.status == "ACTIVE",
+            )
+        )
+        if profile
+        else 0
+    )
+
+    return AdminStudentRow(
+        user_id=user.id,
+        full_name=f"{user.first_name} {user.last_name}",
+        email=user.email,
+        is_active=user.is_active,
+        student_profile_id=profile.id if profile else None,
+        student_number=profile.student_number if profile else None,
+        program_id=profile.program_id if profile else None,
+        program_name=program.name if program else None,
+        academic_year=profile.academic_year if profile else None,
+        semester=profile.semester if profile else None,
+        course_count=course_count or 0,
+    )
+
+
+@router.get(
+    "/students",
+    response_model=list[AdminStudentRow],
+)
+def list_students(
+    search: str | None = Query(default=None, max_length=100),
+    program_id: int | None = Query(default=None),
+    academic_year: int | None = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    query = (
+        select(User, StudentProfile, Program)
+        .outerjoin(StudentProfile, StudentProfile.user_id == User.id)
+        .outerjoin(Program, Program.id == StudentProfile.program_id)
+        .where(User.role == UserRole.STUDENT)
+    )
+
+    if search:
+        pattern = f"%{search.strip()}%"
+
+        query = query.where(
+            or_(
+                User.email.ilike(pattern),
+                User.first_name.ilike(pattern),
+                User.last_name.ilike(pattern),
+                StudentProfile.student_number.ilike(pattern),
+            )
+        )
+
+    if program_id is not None:
+        query = query.where(StudentProfile.program_id == program_id)
+
+    if academic_year is not None:
+        query = query.where(StudentProfile.academic_year == academic_year)
+
+    rows = db.execute(query.order_by(User.last_name, User.first_name)).all()
+
+    return [student_row(user, profile, program, db) for user, profile, program in rows]
+
+
+@router.get(
+    "/students/{user_id}",
+    response_model=AdminStudentDetail,
+)
+def get_student(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    user = db.get(User, user_id)
+
+    if user is None or user.role != UserRole.STUDENT:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Studenti nuk u gjet.",
+        )
+
+    profile = db.scalar(
+        select(StudentProfile).where(StudentProfile.user_id == user.id)
+    )
+    program = db.get(Program, profile.program_id) if profile else None
+
+    courses = []
+
+    if profile is not None:
+        rows = db.execute(
+            select(Enrollment, Course)
+            .join(Course, Course.id == Enrollment.course_id)
+            .where(Enrollment.student_profile_id == profile.id)
+            .order_by(Course.semester, Course.code)
+        ).all()
+
+        for enrollment, course in rows:
+            group = (
+                db.get(CourseGroup, enrollment.group_id)
+                if enrollment.group_id
+                else None
+            )
+            teacher = teacher_of_enrollment(enrollment, course, db)
+
+            courses.append(
+                AdminStudentCourse(
+                    enrollment_id=enrollment.id,
+                    course_id=course.id,
+                    code=course.code,
+                    name=course.name,
+                    semester=course.semester,
+                    ects=course.ects,
+                    group_id=enrollment.group_id,
+                    group_name=group.name if group else None,
+                    teacher_name=teacher.full_name if teacher else None,
+                    status=enrollment.status,
+                )
+            )
+
+    return AdminStudentDetail(
+        **student_row(user, profile, program, db).model_dump(),
+        courses=courses,
+    )

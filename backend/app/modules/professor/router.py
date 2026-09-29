@@ -13,7 +13,13 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_professor
+from app.core.teaching import (
+    professor_sees_enrollment,
+    professor_sees_schedule,
+    teaches_course,
+)
 from app.models.course import Course
+from app.models.course_group import CourseGroup
 from app.models.document import Document
 from app.models.enrollment import Enrollment
 from app.models.exam import Exam
@@ -74,23 +80,27 @@ def current_professor(
 def taught_course_ids(professor: Professor, db: Session) -> list[int]:
     return list(
         db.scalars(
-            select(Course.id).where(
-                Course.professor_id == professor.id
-            )
+            select(Course.id).where(teaches_course(professor.id))
         ).all()
     )
 
 
-def count_enrolled(course_ids: list[int], db: Session) -> int:
+def count_enrolled(
+    professor: Professor, course_ids: list[int], db: Session
+) -> int:
+    """Studentët e grupeve të këtij profesori në këto lëndë."""
+
     if not course_ids:
         return 0
 
     return db.scalar(
         select(func.count())
         .select_from(Enrollment)
+        .join(Course, Course.id == Enrollment.course_id)
         .where(
             Enrollment.course_id.in_(course_ids),
             Enrollment.status == "ACTIVE",
+            professor_sees_enrollment(professor.id),
         )
     ) or 0
 
@@ -105,7 +115,7 @@ def get_my_courses(
 ):
     courses = db.scalars(
         select(Course)
-        .where(Course.professor_id == professor.id)
+        .where(teaches_course(professor.id))
         .order_by(Course.semester, Course.name)
     ).all()
 
@@ -116,7 +126,7 @@ def get_my_courses(
             name=course.name,
             ects=course.ects,
             semester=course.semester,
-            enrolled_students=count_enrolled([course.id], db),
+            enrolled_students=count_enrolled(professor, [course.id], db),
         )
         for course in courses
     ]
@@ -130,14 +140,11 @@ def get_my_schedule(
     db: Session = Depends(get_db),
     professor: Professor = Depends(current_professor),
 ):
-    course_ids = taught_course_ids(professor, db)
-
-    if not course_ids:
-        return []
-
+    # Ligjëratat e përbashkëta dhe ato të grupeve të tij, jo të kolegëve.
     return db.scalars(
         select(Schedule)
-        .where(Schedule.course_id.in_(course_ids))
+        .join(Course, Course.id == Schedule.course_id)
+        .where(professor_sees_schedule(professor.id))
         .order_by(Schedule.day_of_week, Schedule.start_time)
     ).all()
 
@@ -173,21 +180,22 @@ def get_my_students(
 ):
     """Studentët e regjistruar në lëndët e këtij profesori.
 
-    `course_code` vjen nga klienti, prandaj filtri mbi
-    `Course.professor_id` mbetet i pandryshuar sipër tij: një kod
-    lënde i huaj thjesht kthen listë bosh, jo të dhëna të tjetrit.
+    `course_code` vjen nga klienti, prandaj filtri mbi grupet e
+    profesorit mbetet i pandryshuar sipër tij: një kod lënde i huaj, ose
+    grupi i një kolegu te e njëjta lëndë, kthen listë bosh.
     """
 
     query = (
-        select(User, StudentProfile, Course)
+        select(User, StudentProfile, Course, CourseGroup)
         .join(StudentProfile, StudentProfile.user_id == User.id)
         .join(
             Enrollment,
             Enrollment.student_profile_id == StudentProfile.id,
         )
         .join(Course, Course.id == Enrollment.course_id)
+        .outerjoin(CourseGroup, CourseGroup.id == Enrollment.group_id)
         .where(
-            Course.professor_id == professor.id,
+            professor_sees_enrollment(professor.id),
             Enrollment.status == "ACTIVE",
         )
     )
@@ -208,8 +216,9 @@ def get_my_students(
             academic_year=profile.academic_year,
             course_code=course.code,
             course_name=course.name,
+            group_name=group.name if group else None,
         )
-        for user, profile, course in rows
+        for user, profile, course, group in rows
     ]
 
 
@@ -241,8 +250,9 @@ def get_my_dashboard(
     today_slots = (
         db.scalars(
             select(Schedule)
+            .join(Course, Course.id == Schedule.course_id)
             .where(
-                Schedule.course_id.in_(course_ids),
+                professor_sees_schedule(professor.id),
                 Schedule.day_of_week == today,
             )
             .order_by(Schedule.start_time)
@@ -287,7 +297,7 @@ def get_my_dashboard(
         office=professor.office,
         consultation_hours=professor.consultation_hours,
         courses_taught=len(course_ids),
-        total_students=count_enrolled(course_ids, db),
+        total_students=count_enrolled(professor, course_ids, db),
         today=today,
         today_schedule=[
             DashboardSlot(

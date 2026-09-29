@@ -37,3 +37,11 @@ class CourseResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+
+class StudentCourseResponse(CourseResponse):
+    """Lënda siç e sheh studenti: me grupin dhe profesorin e grupit."""
+
+    group_id: int | None = None
+    group_name: str | None = None
+    teacher_name: str | None = None

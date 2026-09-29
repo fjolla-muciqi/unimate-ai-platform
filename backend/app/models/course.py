@@ -80,6 +80,13 @@ class Course(Base):
         cascade="all, delete-orphan",
     )
 
+    groups = relationship(
+        "CourseGroup",
+        back_populates="course",
+        cascade="all, delete-orphan",
+        order_by="CourseGroup.name",
+    )
+
     exams = relationship(
         "Exam",
         back_populates="course",

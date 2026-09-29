@@ -30,6 +30,14 @@ class Enrollment(Base):
         nullable=False,
     )
 
+    # Grupi i lëndës ku studenti ndjek mësimin, dhe kështu profesori i
+    # tij. Bosh kur lënda nuk ka grupe.
+    group_id: Mapped[int | None] = mapped_column(
+        ForeignKey("course_groups.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
     status: Mapped[str] = mapped_column(
         String(50),
         default="ACTIVE",
