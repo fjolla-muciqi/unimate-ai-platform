@@ -384,7 +384,7 @@ cd backend
 pytest
 ```
 
-**177 teste** mbi SQLite in-memory — pa Postgres, pa Qdrant dhe pa
+**180 teste** mbi SQLite in-memory — pa Postgres, pa Qdrant dhe pa
 thirrje reale te Claude.
 
 | Skedari | Çfarë mbulon |
@@ -552,7 +552,7 @@ dhe MinIO. Ky implementim përdor:
 | MinIO | **Volum lokal Docker** | I abstraktuar; kalimi te S3 prek vetëm një shtresë |
 | Tailwind + shadcn/ui | **Po** | Sipas rekomandimit |
 | React Query | `useEffect` + klient i thjeshtë | Faqet kanë nga një-dy kërkesa; do të ishte peshë e panevojshme |
-| Pytest + FastAPI TestClient | **Po** | 177 teste |
+| Pytest + FastAPI TestClient | **Po** | 180 teste |
 | Playwright | **Po** | 6 teste end-to-end |
 | GitHub Actions | **Po** | `pytest` + `next build` |
 
