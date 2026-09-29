@@ -7,7 +7,11 @@ rregulla të ndryshme — përgjigje e cituar saktë, por e gabuar për të.
 
 - Studenti: universiteti + fakulteti i programit të tij + lëndët e
   programit të tij (edhe ato ku s'është regjistruar ende, si katalog).
-- Profesori: universiteti + fakulteti i tij + lëndët që ligjëron.
+  Materialet e një grupi (ligjëratat e një profesori) vetëm kur është
+  në atë grup: studenti i Grupit A mëson nga ligjëratat e profesorit
+  të vet, jo nga ato të kolegut që jep të njëjtën lëndë.
+- Profesori: universiteti + fakulteti i tij + lëndët që ligjëron, me
+  materialet e të gjitha grupeve të tyre.
 - Administratori: gjithçka (`None` = pa filtër).
 """
 
@@ -17,6 +21,7 @@ from sqlalchemy.orm import Session
 from app.core.teaching import teaches_course
 from app.models.course import Course
 from app.models.document import Document
+from app.models.enrollment import Enrollment
 from app.models.professor import Professor
 from app.models.program import Program
 from app.models.student_profile import StudentProfile
@@ -29,6 +34,9 @@ def accessible_document_ids(user: User, db: Session) -> list[int] | None:
 
     faculty_id: int | None = None
     course_ids: list[int] = []
+
+    # None: pa kufizim sipas grupit (profesori). Listë: grupet e studentit.
+    group_ids: list[int] | None = None
 
     if user.role == UserRole.STUDENT:
         profile = db.scalar(
@@ -45,6 +53,16 @@ def accessible_document_ids(user: User, db: Session) -> list[int] | None:
                     )
                 )
             )
+            group_ids = [
+                group_id
+                for group_id in db.scalars(
+                    select(Enrollment.group_id).where(
+                        Enrollment.student_profile_id == profile.id,
+                        Enrollment.status == "ACTIVE",
+                        Enrollment.group_id.is_not(None),
+                    )
+                )
+            ]
 
     elif user.role == UserRole.PROFESSOR:
         professor = db.scalar(
@@ -75,7 +93,18 @@ def accessible_document_ids(user: User, db: Session) -> list[int] | None:
         )
 
     if course_ids:
-        conditions.append(Document.course_id.in_(course_ids))
+        course_condition = Document.course_id.in_(course_ids)
+
+        if group_ids is not None:
+            course_condition = and_(
+                course_condition,
+                or_(
+                    Document.group_id.is_(None),
+                    Document.group_id.in_(group_ids),
+                ),
+            )
+
+        conditions.append(course_condition)
 
     return list(
         db.scalars(

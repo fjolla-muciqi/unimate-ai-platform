@@ -78,6 +78,23 @@ class Document(Base):
         index=True,
     )
 
+    # Materialet e një profesori: vetëm studentët e grupit të tij i
+    # përdorin te kërkimi. Bosh: materiali vlen për gjithë lëndën.
+    group_id: Mapped[int | None] = mapped_column(
+        ForeignKey("course_groups.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    # Java e semestrit (1-15) dhe lloji, për materialet e lëndëve:
+    # asistenti citon "Java 4 · Ligjëratë" dhe mund të kërkojë sipas javës.
+    week: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    material_type: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+    )
+
     uploaded_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=utcnow,

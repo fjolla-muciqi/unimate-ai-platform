@@ -10,6 +10,7 @@ pyetjeje të vetme.
 import json
 from dataclasses import dataclass, field
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.ai.agents.academic_agent import (
@@ -26,6 +27,8 @@ from app.ai.agents.academic_agent import (
 from app.ai.agents.registry import AgentName, agent_for_tool
 from app.ai.agents import professor_agent, tutor_agent
 from app.ai.rag.retriever import RetrievedChunk, retrieve_context
+from app.models.course import Course
+from app.models.document import Document
 from app.models.professor import Professor
 from app.models.student_profile import StudentProfile
 from app.models.user import User
@@ -119,11 +122,12 @@ TOOL_DEFINITIONS: list[dict] = [
     {
         "name": "search_university_documents",
         "description": (
-            "Kërko në dokumentet zyrtare të universitetit "
-            "(rregullore, syllabuse, udhëzues, njoftime) me kërkim "
-            "semantik. Përdore për çdo pyetje mbi rregulla, procedura, "
-            "afate, kushte, përmbajtje lëndësh ose politika. "
-            "Kthen fragmente të numëruara [1], [2] që duhen cituar."
+            "Kërko në dokumentet e universitetit (rregullore, syllabuse, "
+            "udhëzues, njoftime) dhe në materialet e lëndëve (ligjërata "
+            "dhe ushtrime javore) me kërkim semantik. Përdore për çdo "
+            "pyetje mbi rregulla, procedura, afate, kushte, përmbajtje "
+            "lëndësh ose tema mësimore. Kthen fragmente të numëruara "
+            "[1], [2] që duhen cituar."
         ),
         "input_schema": {
             "type": "object",
@@ -140,6 +144,22 @@ TOOL_DEFINITIONS: list[dict] = [
                     "description": "Sa fragmente të kthehen (1-10).",
                     "minimum": 1,
                     "maximum": 10,
+                },
+                "course_code": {
+                    "type": "string",
+                    "description": (
+                        "Kufizo te materialet e një lënde (p.sh. CS201), "
+                        "kur pyetja është për një lëndë të caktuar."
+                    ),
+                },
+                "week": {
+                    "type": "integer",
+                    "description": (
+                        "Kufizo te materialet e një jave (1-15), kur "
+                        "pyetja përmend javën."
+                    ),
+                    "minimum": 1,
+                    "maximum": 15,
                 },
             },
             "required": ["query"],
@@ -435,12 +455,48 @@ def _run_document_search(
     if not query:
         return "Gabim: parametri 'query' është bosh."
 
+    document_ids = context.document_ids
+    course_code = (tool_input.get("course_code") or "").strip().upper()
+    week = tool_input.get("week")
+
+    # Filtri i lëndës dhe javës ngushton dokumentet e lejuara, kurrë nuk
+    # i zgjeron: modeli nuk mund të arrijë materiale jashtë qasjes.
+    if course_code or week:
+        narrowed = select(Document.id).where(Document.is_active.is_(True))
+
+        if course_code:
+            narrowed = narrowed.join(
+                Course, Course.id == Document.course_id
+            ).where(Course.code == course_code)
+
+        if week:
+            narrowed = narrowed.where(Document.week == week)
+
+        candidates = set(context.db.scalars(narrowed))
+
+        if document_ids is not None:
+            candidates &= set(document_ids)
+
+        if not candidates:
+            label = " ".join(
+                part
+                for part in (course_code, f"java {week}" if week else "")
+                if part
+            )
+
+            return (
+                f"Nuk ka materiale të disponueshme për {label}. Provo "
+                "kërkimin pa kufizimin e lëndës ose të javës."
+            )
+
+        document_ids = sorted(candidates)
+
     chunks = retrieve_context(
         query=query,
         db=context.db,
         limit=tool_input.get("top_k"),
         document_id=context.document_id,
-        document_ids=context.document_ids,
+        document_ids=document_ids,
     )
 
     if not chunks:
