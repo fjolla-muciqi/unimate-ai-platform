@@ -8,8 +8,10 @@ përshkruara te `docs/usability-study/`:
 
     python -m evaluation.usability_analysis
 
-Kolonat e Google Forms lexohen sipas pozicionit: e para është koha e
-plotësimit, pastaj pyetjet në renditjen e `2-pyetesori.md`.
+Kolonat gjenden sipas tekstit të pyetjes, jo sipas pozicionit, që një
+pyetje e shtuar ose e hequr te formulari të mos i zhvendosë. Kodi i
+pjesëmarrësit është opsional: pa të, kodet caktohen sipas radhës së
+plotësimit (P01, P02, ...).
 """
 
 import csv
@@ -20,11 +22,19 @@ from statistics import mean, median, stdev
 
 RESULTS_DIR = Path(__file__).parent / "results" / "usability"
 
-# Pozicionet në CSV (0 = koha e plotësimit nga Google Forms).
-CODE, CONSENT, STATUS, AI_USE = 1, 2, 3, 4
-SUS_COLUMNS = range(5, 15)
-TRUST_COLUMNS = range(15, 20)
-LIKED, IMPROVE = 20, 21
+# Fjalë nga teksti i çdo pyetjeje në `2-pyetesori.md`, pa dallim
+# shkronjash. Pyetjet SUS dhe të besimit janë blloqe të njëpasnjëshme
+# që nisin me pyetjen e parë të bllokut.
+HEADER_KEYS = {
+    "code": "kodi",
+    "consent": "pranoj",
+    "status": "statusi",
+    "ai_use": "asistentë ai",
+    "sus_first": "do të doja ta përdorja",
+    "trust_first": "dukeshin të besueshme",
+    "liked": "pëlqeu",
+    "improve": "përmirësonit",
+}
 
 TRUST_LABELS = [
     "Përgjigjet më dukeshin të besueshme",
@@ -80,26 +90,60 @@ def describe(values: list[float]) -> dict:
     }
 
 
+def find_columns(header: list[str]) -> dict:
+    """Pozicioni i çdo pyetjeje, sipas tekstit të saj."""
+
+    normalized = [column.strip().lower() for column in header]
+
+    def position(key: str) -> int | None:
+        needle = HEADER_KEYS[key]
+
+        return next(
+            (index for index, text in enumerate(normalized) if needle in text),
+            None,
+        )
+
+    columns = {key: position(key) for key in HEADER_KEYS}
+
+    for required in ("consent", "sus_first", "trust_first"):
+        if columns[required] is None:
+            raise ValueError(
+                f"Mungon pyetja “{HEADER_KEYS[required]}” te formulari."
+            )
+
+    return columns
+
+
 def read_responses(path: Path) -> list[dict]:
     with path.open(encoding="utf-8-sig", newline="") as handle:
-        rows = list(csv.reader(handle))[1:]
+        header, *rows = list(csv.reader(handle))
+
+    columns = find_columns(header)
+    sus = range(columns["sus_first"], columns["sus_first"] + 10)
+    trust = range(columns["trust_first"], columns["trust_first"] + 5)
+
+    def cell(row: list[str], key: str) -> str:
+        index = columns[key]
+
+        return row[index].strip() if index is not None and index < len(row) else ""
 
     participants = []
 
     for row in rows:
         # Pa pëlqim, përgjigjja nuk përdoret (shih `3-pelqimi.md`).
-        if not row[CONSENT].strip():
+        if not cell(row, "consent"):
             continue
 
         participants.append(
             {
-                "code": row[CODE].strip(),
-                "status": row[STATUS].strip(),
-                "ai_use": row[AI_USE].strip(),
-                "sus": [int(row[index]) for index in SUS_COLUMNS],
-                "trust": [int(row[index]) for index in TRUST_COLUMNS],
-                "liked": row[LIKED].strip() if len(row) > LIKED else "",
-                "improve": row[IMPROVE].strip() if len(row) > IMPROVE else "",
+                # Pa pyetjen e kodit: sipas radhës së plotësimit.
+                "code": cell(row, "code") or f"P{len(participants) + 1:02d}",
+                "status": cell(row, "status"),
+                "ai_use": cell(row, "ai_use"),
+                "sus": [int(row[index]) for index in sus],
+                "trust": [int(row[index]) for index in trust],
+                "liked": cell(row, "liked"),
+                "improve": cell(row, "improve"),
             }
         )
 

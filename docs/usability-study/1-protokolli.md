@@ -17,6 +17,10 @@ përdoruesit?"*
 - **Jo** persona që të kanë ndihmuar ta ndërtosh sistemin.
 - Secili merr pjesë **një herë**. Mos plotëso asnjëherë pyetësorin në
   emër të dikujt tjetër.
+- Secili **e përdor vetë sistemin** para pyetësorit. Të shikuarit e
+  sistemit, ose një demonstrim, nuk mjafton: pyetjet e SUS dhe të
+  besimit kanë kuptim vetëm pas përdorimit. Minimumi është t'i bëjë
+  asistentit 3–4 pyetje dhe t'i shohë burimet poshtë përgjigjes.
 
 Nëse në fund janë më pak (p.sh. 6), studimi raportohet si "pilot, n = 6".
 Një numër i vogël i vërtetë është i pranueshëm; një numër i sajuar jo.
@@ -28,15 +32,18 @@ Një numër i vogël i vërtetë është i pranueshëm; një numër i sajuar jo.
    te chat-i, që modeli i embeddings të jetë i ngarkuar.
 3. Krijo formularin në Google Forms nga `2-pyetesori.md`.
 4. Kostoja: rreth 5–6 cent për pjesëmarrës; 12 pjesëmarrës ≈ 0.65 $.
+5. Kyçu si admin dhe shëno numrin **"Pyetje (30 ditë)"** te paneli.
+   Pas seancave, rritja e tij tregon sa pyetje bënë pjesëmarrësit — dëshmi
+   në tezë që studimi u krye me përdorim të vërtetë.
 
 ## Seanca (rreth 15 minuta)
 
 | Hapi | Koha | Çfarë bën |
 |---|---|---|
-| 1 | 2 min | Lexo tekstin e pëlqimit (`3-pelqimi.md`). Vazhdo vetëm nëse pranon. Jepi një kod: P01, P02, … |
+| 1 | 2 min | Lexo tekstin e pëlqimit (`3-pelqimi.md`). Vazhdo vetëm nëse pranon. |
 | 2 | 1 min | Hap aplikacionin të kyçur si studenti demo. Thuaj: *"Je Arta, studente në vitin e dytë. Ky është asistenti universitar."* |
 | 3 | 10 min | Jepi detyrat më poshtë një nga një, të shkruara ose me zë. **Mos ndihmo** përveç nëse ngec mbi 2 minuta. |
-| 4 | 3 min | Pjesëmarrësi plotëson vetë pyetësorin në Google Forms, me kodin e vet. |
+| 4 | 3 min | Pjesëmarrësi plotëson vetë pyetësorin në Google Forms. Kodet P01, P02, … i cakton skripti sipas radhës së plotësimit. |
 
 Para çdo pjesëmarrësi, te chat-i shtyp **"Bisedë e re"**, që të mos shohë
 pyetjet e personit të mëparshëm.
@@ -63,7 +70,9 @@ Për çdo pjesëmarrës shëno në një tabelë (Excel ose letër):
 |---|---|---|---|---|---|---|---|---|---|
 | P01 | S | S | S | Po | S | ME | S | S | "e priti gjatë quiz-in" |
 
-**S** = e kreu vetë, **ME** = me ndihmë, **D** = dështoi.
+**S** = e kreu vetë, **ME** = me ndihmë, **D** = dështoi. Kodi i
+pjesëmarrësit këtu ndjek radhën e seancave (i pari P01, i dyti P02, …),
+që të përputhet me radhën e pyetësorëve.
 
 Ruaje si `vezhgimet.csv` me këto kolona. Skripti i analizës e lexon.
 

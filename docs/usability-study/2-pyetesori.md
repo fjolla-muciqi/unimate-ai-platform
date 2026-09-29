@@ -1,7 +1,9 @@
 # Pyetësori — për Google Forms
 
-Krijo një formular të ri dhe shto pyetjet në **këtë renditje**. Skripti i
-analizës i lexon kolonat sipas renditjes, prandaj mos i ndërro vendet.
+Krijo një formular të ri me pyetjet më poshtë. Skripti i analizës i gjen
+kolonat sipas tekstit të pyetjes, prandaj **mos e ndrysho tekstin** e
+pyetjeve 5 dhe 15 (pyetjet e para të SUS-it dhe të besimit), dhe mbaj
+pyetjet 5–14 dhe 15–19 të njëpasnjëshme.
 
 Për pyetjet me shkallë, përdor **"Linear scale" 1–5**, me etiketat
 *1 = Nuk pajtohem aspak* dhe *5 = Pajtohem plotësisht*.
@@ -16,7 +18,8 @@ intereson mendimi juaj i sinqertë.
 
 ## Seksioni 1 — Të dhëna bazë
 
-1. **Kodi i pjesëmarrësit** (p.sh. P01) — *Short answer, e detyrueshme*
+1. **Kodi i pjesëmarrësit** — *opsionale*; pa të, kodet caktohen sipas
+   radhës së plotësimit
 2. **Pranoj të marr pjesë dhe që përgjigjet e mia anonime të përdoren në
    një punim diplome.** — *Checkbox, e detyrueshme*
 3. **Statusi juaj** — *Multiple choice:* Student bachelor · Student

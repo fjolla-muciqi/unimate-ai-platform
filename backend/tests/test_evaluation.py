@@ -1,5 +1,6 @@
 """Vlerësimi: metrikat, kufiri i buxhetit dhe integriteti i dataset-it."""
 
+import csv
 from types import SimpleNamespace
 
 import pytest
@@ -252,28 +253,58 @@ def test_sus_adjectives_follow_bangor():
     assert sus_adjective(60) == "në rregull"
 
 
-def test_forms_export_is_read_by_position_and_needs_consent(tmp_path):
-    header = ["Timestamp", "Kodi", "Pëlqimi", "Statusi", "AI"] + [
-        f"q{index}" for index in range(5, 22)
-    ]
-    agreed = ["t", "P01", "Pranoj", "Student bachelor", "Çdo javë"] + [
-        "5", "1"
-    ] * 5 + ["4", "5", "3", "4", "5", "Burimet", ""]
-    refused = ["t", "P02", "", "Student bachelor", "Rrallë"] + ["3"] * 15 + ["", ""]
+FORM_HEADER = [
+    "Timestamp",
+    "Pranoj të marr pjesë dhe që përgjigjet e mia anonime të përdoren",
+    "Statusi juaj i studimeve",
+    "Sa shpesh përdorni asistentë AI (ChatGPT, Claude, Gemini…)?",
+    "Mendoj se do të doja ta përdorja këtë sistem shpesh.",
+    *[f"SUS {index}" for index in range(2, 11)],
+    "Përgjigjet e asistentit më dukeshin të besueshme.",
+    *[f"Besimi {index}" for index in range(2, 6)],
+    "Çfarë ju pëlqeu më shumë?",
+    "Çfarë do të përmirësonit?",
+]
 
+
+def write_export(tmp_path, header, rows):
     path = tmp_path / "pergjigjet.csv"
-    path.write_text(
-        "\n".join(",".join(row) for row in (header, agreed, refused)),
-        encoding="utf-8",
-    )
+    # Me thonjëza si eksporti i Google Forms: disa pyetje kanë presje.
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        csv.writer(handle).writerows([header, *rows])
 
-    participants = read_responses(path)
+    return path
 
-    # Pjesëmarrësi pa pëlqim nuk numërohet.
-    assert [item["code"] for item in participants] == ["P01"]
+
+def test_forms_export_is_read_by_question_text_without_a_code_column(tmp_path):
+    agreed = ["t", "Pranoj", "Bachelor", "Çdo javë"] + ["5", "1"] * 5 + [
+        "4", "5", "3", "4", "5", "Burimet", "",
+    ]
+    refused = ["t", "", "Bachelor", "Rrallë"] + ["3"] * 15 + ["", ""]
+
+    participants = read_responses(write_export(tmp_path, FORM_HEADER, [agreed, refused, agreed]))
+
+    # Pa pëlqim nuk numërohet; kodet caktohen sipas radhës.
+    assert [item["code"] for item in participants] == ["P01", "P02"]
 
     result = analyse(participants, [])
 
     assert result["sus"]["mean"] == 100.0
     assert result["trust"][1]["agree_share"] == 1.0
-    assert result["comments"]["liked"] == ["Burimet"]
+    assert result["comments"]["liked"] == ["Burimet", "Burimet"]
+
+
+def test_code_column_is_used_when_the_form_has_it(tmp_path):
+    header = FORM_HEADER[:1] + ["Kodi i pjesëmarrësit"] + FORM_HEADER[1:]
+    row = ["t", "P07", "Pranoj", "Master", "Rrallë"] + ["3"] * 15 + ["", ""]
+
+    participants = read_responses(write_export(tmp_path, header, [row]))
+
+    assert participants[0]["code"] == "P07"
+
+
+def test_missing_sus_questions_are_reported(tmp_path):
+    header = ["Timestamp", "Pranoj", "Përgjigjet e asistentit më dukeshin të besueshme."]
+
+    with pytest.raises(ValueError):
+        read_responses(write_export(tmp_path, header, []))
