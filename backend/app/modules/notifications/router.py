@@ -118,7 +118,9 @@ def delete_notification(
 ):
     notification = get_notification_or_404(notification_id, db)
 
-    notification.is_active = False
+    # Fshirje e vërtetë, si te afatet dhe provimet. Për ta fshehur
+    # përkohësisht, admini vendos `is_active=False` me PUT.
+    db.delete(notification)
 
     db.commit()
 

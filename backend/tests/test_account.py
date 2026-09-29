@@ -319,3 +319,25 @@ def test_profile_rejects_impossible_year_and_semester(client, academic_data):
         headers=headers,
     )
     assert chosen_number.status_code == 422
+
+
+def test_deleting_a_notification_removes_it_from_the_admin_list(
+    client, admin_user
+):
+    headers = auth_headers(login(client, admin_user.email, "Admin123!"))
+
+    created = client.post(
+        "/api/notifications",
+        json={"title": "Njoftim prove", "body": "Tekst"},
+        headers=headers,
+    ).json()
+
+    assert (
+        client.delete(
+            f"/api/notifications/{created['id']}", headers=headers
+        ).status_code
+        == 204
+    )
+
+    remaining = client.get("/api/notifications", headers=headers).json()
+    assert created["id"] not in [item["id"] for item in remaining]
