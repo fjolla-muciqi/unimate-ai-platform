@@ -33,6 +33,9 @@ class ProfessorCreate(BaseModel):
     consultation_hours: str | None = None
     faculty_id: int | None = None
 
+    # Me fjalëkalim krijohet edhe llogaria e kyçjes (kërkon email).
+    password: str | None = Field(default=None, min_length=8, max_length=128)
+
 
 class ProfessorUpdate(BaseModel):
     first_name: str | None = Field(default=None, min_length=2, max_length=100)
@@ -42,6 +45,9 @@ class ProfessorUpdate(BaseModel):
     office: str | None = Field(default=None, max_length=100)
     consultation_hours: str | None = None
     faculty_id: int | None = None
+
+    # Krijon llogarinë nëse mungon, përndryshe e rivendos fjalëkalimin.
+    password: str | None = Field(default=None, min_length=8, max_length=128)
 
 
 class ProfessorResponse(BaseModel):
@@ -56,6 +62,9 @@ class ProfessorResponse(BaseModel):
     office: str | None
     consultation_hours: str | None
     faculty_id: int | None
+    user_id: int | None = None
+    has_account: bool = False
+    account_active: bool | None = None
 
 
 class PrerequisiteCreate(BaseModel):
