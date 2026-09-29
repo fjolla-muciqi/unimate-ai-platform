@@ -382,6 +382,7 @@ Për të filluar nga zero, fshi volumin: `docker compose down -v`.
 | GET | `/api/admin/students` | **admin** | Studentët me programin dhe numrin e lëndëve, edhe ata pa profil |
 | GET | `/api/admin/students/{user_id}` | **admin** | Lëndët e studentit me grupin dhe profesorin |
 | CRUD | `/api/course-groups` | admin për shkrim | Grupet e lëndëve, secili me profesorin e vet |
+| POST / PUT | `/api/professors` | **admin** | Me `password` krijon ose rivendos llogarinë e kyçjes së profesorit |
 | PATCH | `/api/documents/{id}` | staf | Fakulteti, lënda, grupi, java dhe lloji, pa ri-indeksim |
 | POST | `/api/documents/upload-materials` | staf | Materialet e një lënde njëherësh; java lexohet nga emri i skedarit |
 | GET | `/api/analytics/overview` | **admin** | Metrikat e asistentit |
@@ -413,7 +414,7 @@ cd backend
 pytest
 ```
 
-**224 teste** mbi SQLite in-memory — pa Postgres, pa Qdrant dhe pa
+**232 teste** mbi SQLite in-memory — pa Postgres, pa Qdrant dhe pa
 thirrje reale te Claude.
 
 | Skedari | Çfarë mbulon |
@@ -437,10 +438,11 @@ thirrje reale te Claude.
 | `test_groups.py` | Disa profesorë te e njëjta lëndë, izolimi mes grupeve, caktimi automatik |
 | `test_course_materials.py` | Materialet javore sipas grupit, ngarkimi i shumëfishtë, kërkimi sipas javës |
 | `test_document_naming.py` | Leximi i javës dhe i llojit nga emri i skedarit |
+| `test_professor_accounts.py` | Krijimi i profesorit me llogari, rivendosja e fjalëkalimit, çaktivizimi |
 
 ### End-to-end (Playwright)
 
-Tetë teste kundrejt sistemit që po punon në Docker: kyçja dhe paneli,
+Nëntë teste kundrejt sistemit që po punon në Docker: kyçja dhe paneli,
 fjalëkalimi i gabuar, menutë sipas rolit, bllokimi nga Guardrail-i në
 chat, shtimi dhe fshirja e një njoftimi nga admini, dhe regjistrimi i
 një studenti të ri deri te lëndët e tij. Asnjë nuk arrin te Claude.
@@ -585,8 +587,8 @@ dhe MinIO. Ky implementim përdor:
 | MinIO | **Volum lokal Docker** | I abstraktuar; kalimi te S3 prek vetëm një shtresë |
 | Tailwind + shadcn/ui | **Po** | Sipas rekomandimit |
 | React Query | `useEffect` + klient i thjeshtë | Faqet kanë nga një-dy kërkesa; do të ishte peshë e panevojshme |
-| Pytest + FastAPI TestClient | **Po** | 224 teste |
-| Playwright | **Po** | 8 teste end-to-end |
+| Pytest + FastAPI TestClient | **Po** | 232 teste |
+| Playwright | **Po** | 9 teste end-to-end |
 | GitHub Actions | **Po** | `pytest` + `next build` |
 
 Këto zgjedhje duhen përmendur në kapitullin e teknologjive.

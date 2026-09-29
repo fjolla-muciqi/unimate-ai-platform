@@ -101,6 +101,10 @@ const byCode = (a: Course, b: Course) => a.code.localeCompare(b.code);
 const byName = (a: { name: string }, b: { name: string }) =>
   a.name.localeCompare(b.name);
 
+const byLastName = (a: Professor, b: Professor) =>
+  a.last_name.localeCompare(b.last_name) ||
+  a.first_name.localeCompare(b.first_name);
+
 const byGroup = (a: CourseGroup, b: CourseGroup) =>
   (a.course_code ?? "").localeCompare(b.course_code ?? "") ||
   a.name.localeCompare(b.name);
@@ -143,7 +147,7 @@ export default function ManagePage() {
       ] = await Promise.all([
         admin.courses.list(),
         admin.programs.list(),
-        api.professors(),
+        admin.professors.list(),
         admin.faculties.list(),
         admin.courseGroups.list(),
       ]);
@@ -260,6 +264,22 @@ export default function ManagePage() {
     { name: "description", label: "Përshkrimi", type: "textarea", wide: true },
   ];
 
+  const professorFields: FieldDef[] = [
+    { name: "first_name", label: "Emri", type: "text", required: true },
+    { name: "last_name", label: "Mbiemri", type: "text", required: true },
+    { name: "title", label: "Titulli", type: "text", placeholder: "Prof. Dr." },
+    { name: "email", label: "Email-i (për kyçje)", type: "email" },
+    { name: "faculty_id", label: "Fakulteti", type: "select", options: facultyOptions },
+    { name: "office", label: "Zyra", type: "text", placeholder: "B-210" },
+    {
+      name: "password",
+      label: "Fjalëkalimi i llogarisë",
+      type: "password",
+      placeholder: "Bosh: pa llogari / pa ndryshim",
+    },
+    { name: "consultation_hours", label: "Konsultimet", type: "text", placeholder: "E martë 12:00-14:00" },
+  ];
+
   const courseFields: FieldDef[] = [
     { name: "code", label: "Kodi", type: "text", required: true, placeholder: "CS301" },
     { name: "name", label: "Emri", type: "text", required: true },
@@ -334,6 +354,7 @@ export default function ManagePage() {
         <TabsList className="h-auto flex-wrap justify-start">
           <TabsTrigger value="faculties">Fakultetet</TabsTrigger>
           <TabsTrigger value="programs">Programet</TabsTrigger>
+          <TabsTrigger value="professors">Profesorët</TabsTrigger>
           <TabsTrigger value="courses">Lëndët</TabsTrigger>
           <TabsTrigger value="groups">Grupet</TabsTrigger>
           <TabsTrigger value="schedules">Orari</TabsTrigger>
@@ -421,6 +442,73 @@ export default function ManagePage() {
                 cell: (program) =>
                   (courses ?? []).filter((course) => course.program_id === program.id).length,
                 className: "tabular-nums",
+              },
+            ]}
+          />
+        </TabsContent>
+
+        <TabsContent value="professors">
+          <ResourceManager<Professor>
+            title="Profesorët"
+            description="Me fjalëkalim krijohet edhe llogaria e kyçjes, me të cilën profesori sheh grupet e veta dhe ngarkon materialet e tyre. Fjalëkalimi i ri te ndryshimi e rivendos."
+            singular="profesor"
+            resource={admin.professors}
+            fields={professorFields}
+            sort={byLastName}
+            onChange={() => void loadLookups()}
+            deleteWarning="Lëndët dhe grupet e profesorit mbeten pa profesor, dhe llogaria e tij çaktivizohet (nuk fshihet, që dokumentet e tij të ruhen)."
+            emptyForm={{
+              first_name: "",
+              last_name: "",
+              title: "",
+              email: "",
+              faculty_id: facultyOptions[1]?.value ?? NONE,
+              office: "",
+              password: "",
+              consultation_hours: "",
+            }}
+            toForm={(professor) => ({
+              first_name: professor.first_name,
+              last_name: professor.last_name,
+              title: professor.title ?? "",
+              email: professor.email ?? "",
+              faculty_id: idOrNone(professor.faculty_id),
+              office: professor.office ?? "",
+              password: "",
+              consultation_hours: professor.consultation_hours ?? "",
+            })}
+            toPayload={(values) => ({
+              first_name: values.first_name.trim(),
+              last_name: values.last_name.trim(),
+              title: optionalText(values.title),
+              email: optionalText(values.email),
+              faculty_id: optionalId(values.faculty_id),
+              office: optionalText(values.office),
+              consultation_hours: optionalText(values.consultation_hours),
+              // Vetëm kur plotësohet: bosh do të thotë "mos e prek llogarinë".
+              ...(values.password ? { password: values.password } : {}),
+            })}
+            columns={[
+              {
+                header: "Profesori",
+                cell: (professor) => (
+                  <span className="font-medium">
+                    {[professor.title, professor.full_name].filter(Boolean).join(" ")}
+                  </span>
+                ),
+              },
+              { header: "Fakulteti", cell: (professor) => facultyName(professor.faculty_id) },
+              { header: "Email", cell: (professor) => professor.email ?? "—" },
+              {
+                header: "Llogaria",
+                cell: (professor) =>
+                  !professor.has_account ? (
+                    <Badge variant="outline">Pa llogari</Badge>
+                  ) : professor.account_active ? (
+                    <Badge variant="success">Aktive</Badge>
+                  ) : (
+                    <Badge variant="warning">Joaktive</Badge>
+                  ),
               },
             ]}
           />

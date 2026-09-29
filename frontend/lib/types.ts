@@ -251,6 +251,10 @@ export interface Professor {
   office: string | null;
   consultation_hours: string | null;
   faculty_id: number | null;
+  // Vetëm për administratorin; të tjerët marrin null/false.
+  user_id: number | null;
+  has_account: boolean;
+  account_active: boolean | null;
 }
 
 export interface DashboardSlot {

@@ -144,3 +144,35 @@ test("administratori ndryshon grupin e një studenti", async ({ page }) => {
   // Kthehet si ishte, që testi të mos ndryshojë të dhënat e demos.
   await changeTo("Grupi A", "Arben Hoxha");
 });
+
+test("administratori krijon një profesor që mund të kyçet", async ({ browser }) => {
+  const email = `prof.${Date.now()}@unimate.edu`;
+
+  const adminPage = await browser.newPage();
+  await login(adminPage, ADMIN.email, ADMIN.password);
+  await adminPage.waitForURL((url) => !url.pathname.startsWith("/login"));
+
+  await adminPage.goto("/admin/manage");
+  await adminPage.getByRole("tab", { name: "Profesorët" }).click();
+  await adminPage.getByRole("button", { name: "Shto profesor" }).click();
+  // Etiketat e fushave të detyrueshme mbarojnë me " *".
+  await adminPage.getByLabel(/^Emri/).fill("Provë");
+  await adminPage.getByLabel("Mbiemri").fill("Profesori");
+  await adminPage.getByLabel("Email-i (për kyçje)").fill(email);
+  await adminPage.getByLabel("Fjalëkalimi i llogarisë").fill("Profesor123!");
+  await adminPage.getByRole("button", { name: "Ruaj" }).click();
+
+  const row = adminPage.getByRole("row", { name: new RegExp(email) });
+  await expect(row).toContainText("Aktive");
+
+  // Profesori i ri kyçet në një sesion tjetër.
+  const professorPage = await browser.newPage();
+  await login(professorPage, email, "Profesor123!");
+  await expect(professorPage).toHaveURL(/\/teaching/);
+  await professorPage.close();
+
+  // Fshirja e çaktivizon llogarinë; profesori i provës nuk mbetet aktiv.
+  await row.getByRole("button", { name: "Fshi" }).click();
+  await row.getByRole("button", { name: "Konfirmo fshirjen" }).click();
+  await expect(row).toHaveCount(0);
+});

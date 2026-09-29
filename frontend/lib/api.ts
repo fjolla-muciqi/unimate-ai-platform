@@ -153,6 +153,7 @@ export const admin = {
   programs: resource<Program>("/api/programs"),
   faculties: resource<Faculty>("/api/faculties"),
   courseGroups: resource<CourseGroup>("/api/course-groups"),
+  professors: resource<Professor>("/api/professors"),
 
   students(
     filters: { search?: string; programId?: string } = {},

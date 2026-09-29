@@ -61,7 +61,15 @@ export interface FieldOption {
 export interface FieldDef {
   name: string;
   label: string;
-  type: "text" | "textarea" | "number" | "select" | "time" | "datetime";
+  type:
+    | "text"
+    | "textarea"
+    | "number"
+    | "select"
+    | "time"
+    | "datetime"
+    | "email"
+    | "password";
   required?: boolean;
   options?: FieldOption[];
   placeholder?: string;
