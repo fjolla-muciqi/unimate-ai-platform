@@ -62,7 +62,9 @@ administratorit.
    rolit te JWT-ja.
 6. Kyçu si **admin** → te `/admin` shfaqet tentativa e hapit 4 në
    regjistrin e sigurisë, me përdoruesin, rregullën dhe kohën.
-7. Te `/admin/manage` shto një provim për CS202 → pyet asistentin si
+7. Regjistro një llogari të re → faqja *Plotëso profilin akademik* →
+   zgjidh programin dhe semestrin → lëndët e semestrit shfaqen vetë.
+8. Te `/admin/manage` shto një provim për CS202 → pyet asistentin si
    student *"Kur e kam provimin e radhës?"* dhe përgjigjja e përfshin.
 
 ## Arkitektura
@@ -176,7 +178,7 @@ modeli e thërret kërkimin disa herë (`SourceRegistry`).
 
 ### Prompt caching
 
-Cikli agentik ridërgon të njëjtin prefiks — 12 përkufizime tools plus
+Cikli agentik ridërgon të njëjtin prefiks — 13 përkufizime tools plus
 system prompt-i, rreth **3 600 tokena** — në secilin nga deri në 6
 iteracionet e një pyetjeje. Renditja e renderimit është
 `tools → system → messages`, prandaj një breakpoint i vetëm mbi bllokun
@@ -277,6 +279,20 @@ upload → PENDING → PROCESSING → ekstraktim → chunking →
 embeddings → Qdrant → INDEXED   (ose FAILED me arsyen)
 ```
 
+**Chunking:** teksti ndahet në fjali të plota, që paketohen në
+fragmente deri në 500 karaktere; fjalia e fundit përsëritet në fillim
+të fragmentit pasardhës. Madhësia u zgjodh me matje (shih
+*Vlerësimi*).
+
+**Kërkimi është hibrid:** Qdrant kthen 4× më shumë kandidatë, dhe
+secili renditet sipas `ngjashmëria + 0.3 × përputhja e fjalëve`
+(rrënjët e fjalëve të pyetjes që gjenden në fragment, pa ë/ç, që
+"bursë", "bursa" dhe "bursat" të përputhen).
+
+Nëse API-ja riniset gjatë përpunimit, dokumenti do të mbetej
+`PROCESSING` përgjithmonë; prandaj `scripts/recover_documents.py`
+ekzekutohet në çdo nisje dhe i shënon ato `FAILED`.
+
 Frontend-i e ndjek statusin dhe rifreskohet vetë derisa dokumenti të
 mbërrijë në një gjendje përfundimtare. Nëse diçka dështon, statusi
 bëhet `FAILED` me shkakun e dukshëm dhe administratori shtyp
@@ -368,7 +384,7 @@ cd backend
 pytest
 ```
 
-**153 teste** mbi SQLite in-memory — pa Postgres, pa Qdrant dhe pa
+**177 teste** mbi SQLite in-memory — pa Postgres, pa Qdrant dhe pa
 thirrje reale te Claude.
 
 | Skedari | Çfarë mbulon |
@@ -387,6 +403,28 @@ thirrje reale te Claude.
 | `test_validator.py` | Heqja e citimeve të shpikura, shënimi i pyetjeve pa përgjigje |
 | `test_chat_api.py` | Bisedat, historiku, privatësia mes përdoruesve |
 | `test_analytics.py` | Metrikat e panelit dhe feedback-u i studentëve |
+| `test_evaluation.py` | Metrikat e vlerësimit, kufiri i buxhetit, integriteti i dataset-it |
+
+### End-to-end (Playwright)
+
+Gjashtë teste kundrejt sistemit që po punon në Docker: kyçja dhe paneli,
+fjalëkalimi i gabuar, menutë sipas rolit, bllokimi nga Guardrail-i në
+chat, shtimi dhe fshirja e një njoftimi nga admini, dhe regjistrimi i
+një studenti të ri deri te lëndët e tij. Asnjë nuk arrin te Claude.
+
+```bash
+docker compose up -d
+cd frontend
+npm run e2e          # përdor Edge-in e Windows-it; PW_CHANNEL=chromium në Linux
+```
+
+Testi i fundit krijon një llogari të re në çdo ekzekutim;
+`docker compose down -v` i pastron.
+
+### CI
+
+`.github/workflows/ci.yml` ekzekuton `pytest` dhe `next build` në çdo
+push dhe pull request te `main`, pa sekrete dhe pa thirrje te Claude.
 
 ## Struktura
 
@@ -407,14 +445,18 @@ backend/
     modules/       routers sipas domenit (përfshirë admin)
     schemas/       modelet Pydantic
   alembic/         migrimet
-  scripts/         seed.py, demo_documents.py
+  scripts/         seed.py, demo_documents.py, recover_documents.py
+  evaluation/      dataset, retrieval, ablacionet, agjentët, baseline, raporti
   tests/
+
+docs/
+  diagrams.md      Use Case, C4, ER, Sequence, Activity, Class (Mermaid)
 
 frontend/
   app/
     (auth)/        login, register
-    (app)/         dashboard, courses, schedule, exams, teaching,
-                   teaching/students, chat, documents, admin,
+    (app)/         onboarding, dashboard, courses, schedule, exams,
+                   teaching, teaching/students, chat, documents, admin,
                    admin/manage, analytics, profile
   components/
     ui/            shadcn/ui
@@ -423,6 +465,7 @@ frontend/
     chat/          burimet, artifacts (quiz + flashcards)
     documents/     shenja e statusit
   lib/             api client, tipet, konteksti i autentikimit
+  e2e/             testet Playwright
 ```
 
 ## Konfigurimi
@@ -439,6 +482,8 @@ Në Docker ato vijnë nga `docker-compose.yml`.
 | `AGENT_MAX_ITERATIONS` | `6` | Sa raunde tools lejohen për një pyetje |
 | `RAG_TOP_K` | `5` | Sa fragmente merren nga Qdrant |
 | `RAG_MIN_SCORE` | `0.25` | Pragu minimal i ngjashmërisë |
+| `RAG_CHUNK_SIZE` / `RAG_CHUNK_OVERLAP` | `500` / `120` | Madhësia e fragmenteve; ndryshimi kërkon ri-indeksim |
+| `RAG_KEYWORD_WEIGHT` | `0.3` | Pesha e përputhjes së fjalëve; `0` = vetëm vektorë |
 | `CORS_ORIGINS` | `http://localhost:3000,…` | Origjinat e lejuara |
 | `SEED_ON_STARTUP` | `1` | Mbush të dhënat demo në nisje (vetëm Docker) |
 
@@ -472,5 +517,8 @@ dhe MinIO. Ky implementim përdor:
 | MinIO | **Volum lokal Docker** | I abstraktuar; kalimi te S3 prek vetëm një shtresë |
 | Tailwind + shadcn/ui | **Po** | Sipas rekomandimit |
 | React Query | `useEffect` + klient i thjeshtë | Faqet kanë nga një-dy kërkesa; do të ishte peshë e panevojshme |
+| Pytest + FastAPI TestClient | **Po** | 177 teste |
+| Playwright | **Po** | 6 teste end-to-end |
+| GitHub Actions | **Po** | `pytest` + `next build` |
 
 Këto zgjedhje duhen përmendur në kapitullin e teknologjive.
