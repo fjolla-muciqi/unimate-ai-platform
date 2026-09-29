@@ -7,6 +7,7 @@ from qdrant_client.models import (
     FieldCondition,
     Filter,
     FilterSelector,
+    MatchAny,
     MatchValue,
     PointStruct,
     VectorParams,
@@ -147,6 +148,7 @@ def semantic_search(
     query: str,
     limit: int = 5,
     document_id: int | None = None,
+    document_ids: list[int] | None = None,
 ) -> list[dict]:
     create_collection_if_not_exists()
 
@@ -159,17 +161,28 @@ def semantic_search(
         show_progress_bar=False,
     ).tolist()
 
-    query_filter = None
+    conditions = []
 
     if document_id is not None:
-        query_filter = Filter(
-            must=[
-                FieldCondition(
-                    key="document_id",
-                    match=MatchValue(value=document_id),
-                )
-            ]
+        conditions.append(
+            FieldCondition(
+                key="document_id",
+                match=MatchValue(value=document_id),
+            )
         )
+
+    # Dokumentet që i lejohen përdoruesit (shih `rag/scope.py`). Filtri
+    # zbatohet brenda Qdrant-it, që dokumentet e tjera të mos zënë
+    # vendet e kandidatëve.
+    if document_ids is not None:
+        conditions.append(
+            FieldCondition(
+                key="document_id",
+                match=MatchAny(any=document_ids),
+            )
+        )
+
+    query_filter = Filter(must=conditions) if conditions else None
 
     result = client.query_points(
         collection_name=settings.qdrant_collection,

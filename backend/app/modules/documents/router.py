@@ -22,9 +22,13 @@ from app.core.security import (
     require_staff,
 )
 from app.models.audit_log import AuditEvent
+from app.models.course import Course
 from app.models.document import Document, DocumentStatus
+from app.models.faculty import Faculty
+from app.models.professor import Professor
+from app.models.program import Program
 from app.models.user import User, UserRole
-from app.schemas.document import DocumentResponse
+from app.schemas.document import DocumentResponse, DocumentScopeUpdate
 from app.ai.rag.ingestion import ingest_document_in_background
 
 
@@ -89,6 +93,77 @@ def owned_document(
     return document
 
 
+def resolve_scope(
+    faculty_id: int | None,
+    course_id: int | None,
+    current_user: User,
+    db: Session,
+) -> tuple[int | None, int | None]:
+    """Kujt i përket dokumenti: (fakulteti, lënda).
+
+    Me lëndë, fakulteti merret nga programi i saj, që të dy të mos
+    bien ndesh. Profesori mund t'ia caktojë dokumentin vetëm një lënde
+    që ligjëron ose fakultetit të vet; pa këtë, do të mund të vendoste
+    materiale në lëndët e kolegëve.
+    """
+
+    if course_id is not None:
+        course = db.get(Course, course_id)
+
+        if course is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Lënda nuk u gjet.",
+            )
+
+        program = db.get(Program, course.program_id)
+        course_faculty = program.faculty_id if program else None
+
+        if faculty_id is not None and faculty_id != course_faculty:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Lënda nuk i përket fakultetit të zgjedhur.",
+            )
+
+        faculty_id = course_faculty
+
+    elif faculty_id is not None and db.get(Faculty, faculty_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Fakulteti nuk u gjet.",
+        )
+
+    if current_user.role == UserRole.PROFESSOR and (
+        faculty_id is not None or course_id is not None
+    ):
+        professor = db.scalar(
+            select(Professor).where(Professor.user_id == current_user.id)
+        )
+
+        allowed = professor is not None and (
+            teaches_course(professor, course_id, db)
+            if course_id is not None
+            else faculty_id == professor.faculty_id
+        )
+
+        if not allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    "Mund të vendosësh dokumente vetëm në lëndët që "
+                    "ligjëron ose në fakultetin tënd."
+                ),
+            )
+
+    return faculty_id, course_id
+
+
+def teaches_course(professor: Professor, course_id: int, db: Session) -> bool:
+    course = db.get(Course, course_id)
+
+    return course is not None and course.professor_id == professor.id
+
+
 @router.post(
     "/upload",
     response_model=DocumentResponse,
@@ -100,10 +175,18 @@ def upload_document(
     document_type: str = Form(...),
     description: str | None = Form(None),
     academic_year: str | None = Form(None),
+    faculty_id: int | None = Form(None),
+    course_id: int | None = Form(None),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_staff),
 ):
+    # Kontrollohet para ruajtjes së skedarit, që një kërkesë e refuzuar
+    # të mos lërë skedar jetim në disk.
+    faculty_id, course_id = resolve_scope(
+        faculty_id, course_id, current_user, db
+    )
+
     original_name = file.filename or "document"
 
     extension = Path(original_name).suffix.lower()
@@ -134,6 +217,8 @@ def upload_document(
         file_path=file_path.as_posix(),
         document_type=document_type,
         academic_year=academic_year,
+        faculty_id=faculty_id,
+        course_id=course_id,
         uploaded_by=current_user.id,
     )
 
@@ -216,6 +301,34 @@ def get_document(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Document not found.",
         )
+
+    return document
+
+
+@router.patch(
+    "/{document_id}",
+    response_model=DocumentResponse,
+)
+def update_document_scope(
+    document_id: int,
+    payload: DocumentScopeUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_staff),
+):
+    """Ndryshon kujt i përket dokumenti, pa ri-indeksim.
+
+    Filtri i kërkimit lexon fakultetin dhe lëndën nga PostgreSQL në
+    çdo pyetje, prandaj vektorët në Qdrant mbeten të vlefshëm.
+    """
+
+    document = owned_document(document_id, current_user, db)
+
+    document.faculty_id, document.course_id = resolve_scope(
+        payload.faculty_id, payload.course_id, current_user, db
+    )
+
+    db.commit()
+    db.refresh(document)
 
     return document
 

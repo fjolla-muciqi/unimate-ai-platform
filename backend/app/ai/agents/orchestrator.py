@@ -32,6 +32,7 @@ from app.ai.agents.validator_agent import (
     validate_answer,
 )
 from app.ai.llm.client import get_anthropic_client
+from app.ai.rag.scope import accessible_document_ids
 from app.ai.rag.retriever import RetrievedChunk
 from app.core.audit import record_event
 from app.core.config import settings
@@ -408,6 +409,7 @@ def handle_chat_message(
         professor=get_professor_record(user, db),
         sources=SourceRegistry(),
         document_id=document_id,
+        document_ids=accessible_document_ids(user, db),
     )
 
     answer = run_agent(

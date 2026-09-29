@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.ai.agents.orchestrator import handle_chat_message
 from app.ai.llm.client import LLMNotConfiguredError
 from app.ai.rag.retriever import RetrievedChunk, retrieve_context
+from app.ai.rag.scope import accessible_document_ids
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.conversation import Conversation
@@ -329,6 +330,7 @@ def search(
         db=db,
         limit=payload.limit,
         document_id=payload.document_id,
+        document_ids=accessible_document_ids(current_user, db),
     )
 
     return SearchResponse(

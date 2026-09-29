@@ -98,6 +98,9 @@ class ToolContext:
     sources: SourceRegistry = field(default_factory=SourceRegistry)
     document_id: int | None = None
 
+    # Dokumentet që i lejohen përdoruesit (`rag/scope.py`); None = të gjitha.
+    document_ids: list[int] | None = None
+
     # Agjentët e aktivizuar, në radhën e parë të përdorimit.
     agents_used: list[AgentName] = field(default_factory=list)
 
@@ -437,6 +440,7 @@ def _run_document_search(
         db=context.db,
         limit=tool_input.get("top_k"),
         document_id=context.document_id,
+        document_ids=context.document_ids,
     )
 
     if not chunks:
@@ -472,6 +476,7 @@ def _run_tutor_explain(
             topic=topic,
             db=context.db,
             course_code=course_code,
+            document_ids=context.document_ids,
         )
 
     return tutor_agent.explain_topic(
@@ -482,6 +487,7 @@ def _run_tutor_explain(
             tool_input.get("level")
             or tutor_agent.level_for_student(context.profile)
         ),
+        document_ids=context.document_ids,
     )
 
 
@@ -494,6 +500,7 @@ def _run_generate_quiz(
         db=context.db,
         course_code=tool_input.get("course_code"),
         question_count=tool_input.get("question_count", 5),
+        document_ids=context.document_ids,
     )
 
     if quiz is None:
@@ -524,6 +531,7 @@ def _run_generate_flashcards(
         db=context.db,
         course_code=tool_input.get("course_code"),
         card_count=tool_input.get("card_count", 8),
+        document_ids=context.document_ids,
     )
 
     if cards is None:

@@ -63,6 +63,21 @@ class Document(Base):
         nullable=False,
     )
 
+    # Kujt i përket dokumenti. Të dyja bosh: gjithë universitetit.
+    # Me lëndë, fakulteti plotësohet nga programi i lëndës, që kërkimi
+    # të mund të filtrojë vetëm sipas fakultetit.
+    faculty_id: Mapped[int | None] = mapped_column(
+        ForeignKey("faculties.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    course_id: Mapped[int | None] = mapped_column(
+        ForeignKey("courses.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
     uploaded_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=utcnow,

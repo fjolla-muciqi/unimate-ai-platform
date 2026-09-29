@@ -27,6 +27,9 @@ from reportlab.platypus import (
 DEMO_DOCUMENTS: list[dict] = [
     {
         "file_name": "rregullorja-e-studimeve-bachelor.pdf",
+        # Kujt i përket (shih `app/ai/rag/scope.py`); pa këto dy fusha,
+        # dokumenti i përket gjithë universitetit.
+        "faculty": "Fakulteti i Inxhinierisë Kompjuterike",
         "title": "Rregullorja e Studimeve Bachelor",
         "document_type": "REGULATION",
         "description": (
@@ -145,6 +148,7 @@ DEMO_DOCUMENTS: list[dict] = [
     },
     {
         "file_name": "syllabus-cs201-algoritme.pdf",
+        "course": "CS201",
         "title": "Syllabus: CS201 Algoritme dhe Struktura të Dhënash",
         "document_type": "SYLLABUS",
         "description": (

@@ -95,6 +95,7 @@ def retrieve_context(
     limit: int | None = None,
     min_score: float | None = None,
     document_id: int | None = None,
+    document_ids: list[int] | None = None,
 ) -> list[RetrievedChunk]:
     """Pyetja e studentit -> embedding -> Qdrant search
     -> chunks relevante me burimin e tyre."""
@@ -102,6 +103,10 @@ def retrieve_context(
     query = query.strip()
 
     if not query:
+        return []
+
+    # Lista bosh: përdoruesi s'ka qasje në asnjë dokument. `None`: pa filtër.
+    if document_ids is not None and not document_ids:
         return []
 
     if limit is None:
@@ -116,6 +121,7 @@ def retrieve_context(
         query=query,
         limit=limit * CANDIDATE_POOL if weight else limit,
         document_id=document_id,
+        document_ids=document_ids,
     )
 
     # Kërkim hibrid: modeli i embeddings nuk e lidh gjithmonë një fjalë

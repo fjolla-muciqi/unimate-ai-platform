@@ -8,7 +8,7 @@ Idempotent: mund të ekzekutohet disa herë pa krijuar dublikatë.
 from datetime import datetime, time, timedelta
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.ai.rag.ingestion import ingest_document_in_background
@@ -28,6 +28,11 @@ from app.models.program import Program
 from app.models.schedule import Schedule
 from app.models.student_profile import StudentProfile
 from app.models.user import User, UserRole
+from scripts.demo_faculties import (
+    CS_EXTRA_COURSES,
+    EXTRA_FACULTIES,
+    FACULTY_DOCUMENTS,
+)
 from scripts.demo_documents import DEMO_DOCUMENTS, write_pdf
 
 
@@ -414,6 +419,12 @@ def get_or_create_program(db: Session, faculty: Faculty) -> Program:
     )
 
     if program:
+        # Programet e krijuara para se programi të lidhej me fakultetin
+        # kanë mbetur pa të; pa fakultet, studentët e tyre nuk shohin
+        # dokumentet e fakultetit te kërkimi.
+        if program.faculty_id is None:
+            program.faculty_id = faculty.id
+
         return program
 
     program = Program(
@@ -659,6 +670,116 @@ def seed_cohort(
     return created
 
 
+def course_from_tuple(program: Program, data: tuple) -> dict:
+    code, name, ects, semester, description = data
+
+    return {
+        "code": code,
+        "name": name,
+        "ects": ects,
+        "semester": semester,
+        "description": description,
+        "program_id": program.id,
+    }
+
+
+def get_or_create_course(db: Session, fields: dict) -> Course:
+    course = db.scalar(select(Course).where(Course.code == fields["code"]))
+
+    if course is None:
+        course = Course(**fields)
+        db.add(course)
+        db.flush()
+
+    return course
+
+
+def seed_extra_faculties(db: Session, cs_program: Program) -> dict:
+    """Semestrat që i mungonin programit SHK dhe tre fakultete të tjera.
+
+    Kthen numrin e fakulteteve, programeve dhe lëndëve të demos.
+    """
+
+    for data in CS_EXTRA_COURSES:
+        get_or_create_course(db, course_from_tuple(cs_program, data))
+
+    for spec in EXTRA_FACULTIES:
+        faculty = db.scalar(
+            select(Faculty).where(Faculty.name == spec["faculty"])
+        )
+
+        if faculty is None:
+            faculty = Faculty(
+                name=spec["faculty"], description=spec["description"]
+            )
+            db.add(faculty)
+            db.flush()
+
+        program = db.scalar(
+            select(Program).where(Program.name == spec["program"]["name"])
+        )
+
+        if program is None:
+            program = Program(faculty_id=faculty.id, **spec["program"])
+            db.add(program)
+            db.flush()
+
+        data = spec["professor"]
+        professor = db.scalar(
+            select(Professor).where(Professor.email == data["email"])
+        )
+
+        if professor is None:
+            account = get_or_create_user(
+                db,
+                email=data["email"],
+                password=PROFESSOR_PASSWORD,
+                first_name=data["first_name"],
+                last_name=data["last_name"],
+                role=UserRole.PROFESSOR,
+            )
+            professor = Professor(
+                faculty_id=faculty.id, user_id=account.id, **data
+            )
+            db.add(professor)
+            db.flush()
+
+        for course_data in spec["courses"]:
+            course = get_or_create_course(
+                db, course_from_tuple(program, course_data)
+            )
+
+            if course.code in spec["teaches"] and course.professor_id is None:
+                course.professor_id = professor.id
+
+    db.flush()
+
+    return {
+        "faculties": db.scalar(select(func.count()).select_from(Faculty)),
+        "programs": db.scalar(select(func.count()).select_from(Program)),
+        "courses": db.scalar(select(func.count()).select_from(Course)),
+    }
+
+
+def document_scope(db: Session, spec: dict) -> tuple[int | None, int | None]:
+    """Fakulteti dhe lënda e një dokumenti demo, nga emrat te specifikimi."""
+
+    if spec.get("course"):
+        course = db.scalar(select(Course).where(Course.code == spec["course"]))
+        program = db.get(Program, course.program_id)
+
+        return program.faculty_id, course.id
+
+    if spec.get("faculty"):
+        faculty = db.scalar(
+            select(Faculty).where(Faculty.name == spec["faculty"])
+        )
+
+        return faculty.id, None
+
+    return None, None
+
+
 def seed_documents(db: Session, admin: User) -> list[Document]:
     """Krijon PDF-të demo dhe rreshtat përkatës në bazë.
 
@@ -672,7 +793,7 @@ def seed_documents(db: Session, admin: User) -> list[Document]:
 
     documents: list[Document] = []
 
-    for spec in DEMO_DOCUMENTS:
+    for spec in DEMO_DOCUMENTS + FACULTY_DOCUMENTS:
         file_path = upload_dir / spec["file_name"]
 
         if not file_path.exists():
@@ -698,6 +819,10 @@ def seed_documents(db: Session, admin: User) -> list[Document]:
 
             db.add(document)
             db.flush()
+
+        # Rifreskohet në çdo nisje, që edhe dokumentet e seed-uara para
+        # se të ekzistonte fusha ta marrin vendin e tyre.
+        document.faculty_id, document.course_id = document_scope(db, spec)
 
         documents.append(document)
 
@@ -799,6 +924,7 @@ def main() -> None:
         program = get_or_create_program(db, faculty)
         professors = seed_professors(db, faculty)
         courses = seed_courses(db, program, professors)
+        catalog = seed_extra_faculties(db, program)
 
         schedules_created = seed_schedules(db, courses)
         exams_created = seed_exams(db, courses)
@@ -835,7 +961,10 @@ def main() -> None:
 
         print(f"  Fakulteti: {faculty.name}")
         print(f"  Programi:  {program.name}")
-        print(f"  Lëndë:     {len(courses)}")
+        print(
+            f"  Katalogu:  {catalog['faculties']} fakultete, "
+            f"{catalog['programs']} programe, {catalog['courses']} lëndë"
+        )
         print(f"  Profesorë: {len(professors)}")
         print(f"  Orare të reja:        {schedules_created}")
         print(f"  Provime të reja:      {exams_created}")

@@ -8,6 +8,7 @@ class ProgramCreate(BaseModel):
     total_ects: int = Field(default=180, ge=1)
     duration_years: int = Field(default=3, ge=1)
     description: str | None = None
+    faculty_id: int | None = None
 
 
 class ProgramUpdate(BaseModel):
@@ -17,6 +18,7 @@ class ProgramUpdate(BaseModel):
     total_ects: int | None = Field(default=None, ge=1)
     duration_years: int | None = Field(default=None, ge=1)
     description: str | None = None
+    faculty_id: int | None = None
 
 
 class ProgramResponse(BaseModel):
@@ -27,6 +29,7 @@ class ProgramResponse(BaseModel):
     total_ects: int
     duration_years: int
     description: str | None
+    faculty_id: int | None
 
     model_config = {
         "from_attributes": True

@@ -152,7 +152,9 @@ def test_document_search_numbers_sources_consistently(
 
     calls = {"n": 0}
 
-    def fake_retrieve(query, db, limit=None, min_score=None, document_id=None):
+    def fake_retrieve(
+        query, db, limit=None, min_score=None, document_id=None, document_ids=None
+    ):
         calls["n"] += 1
 
         return [chunk_a] if calls["n"] == 1 else [chunk_b, chunk_a]

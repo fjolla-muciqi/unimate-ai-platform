@@ -12,6 +12,10 @@ class DocumentResponse(BaseModel):
     academic_year: str | None
     uploaded_by: int
     uploaded_at: datetime
+
+    # Bosh = gjithë universitetit.
+    faculty_id: int | None = None
+    course_id: int | None = None
     is_active: bool
 
     # Gjendja e pipeline-it RAG: PENDING, PROCESSING, INDEXED, FAILED.
@@ -23,3 +27,12 @@ class DocumentResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+
+class DocumentScopeUpdate(BaseModel):
+    """Kujt i përket dokumenti. Të dyja bosh: gjithë universitetit."""
+
+    faculty_id: int | None = None
+    course_id: int | None = None
+
+    model_config = {"extra": "forbid"}

@@ -16,9 +16,12 @@ from sqlalchemy import select
 from app.ai.rag.retriever import retrieve_context
 from app.core.config import settings
 from app.core.database import SessionLocal
+from app.ai.rag.scope import accessible_document_ids
 from app.models.document import Document, DocumentStatus
+from app.models.user import User
 from evaluation.dataset import retrieval_items
 from evaluation.scoring import hit_rate, mean_reciprocal_rank, source_rank
+from scripts.seed import STUDENT_EMAIL
 
 
 RESULTS_DIR = Path(__file__).parent / "results"
@@ -28,13 +31,28 @@ RESULTS_DIR = Path(__file__).parent / "results"
 TOP_K = 5
 
 
+def student_scope(db) -> list[int] | None:
+    """Dokumentet që i lejohen studentes demo, si te chat-i në prodhim.
+
+    Pa këtë, dokumentet e fakulteteve të tjera do të dilnin si
+    shpërqendrues që studentja nuk i sheh kurrë.
+    """
+
+    student = db.scalar(select(User).where(User.email == STUDENT_EMAIL))
+
+    return accessible_document_ids(student, db)
+
+
 def evaluate(db) -> dict:
     """Ekzekuton pyetjet e retrieval-it dhe kthen përmbledhjen dhe rreshtat."""
+
+    scope = student_scope(db)
 
     indexed = db.scalars(
         select(Document.file_name).where(
             Document.is_active.is_(True),
             Document.status == DocumentStatus.INDEXED,
+            Document.id.in_(scope) if scope is not None else True,
         )
     ).all()
 
@@ -46,6 +64,7 @@ def evaluate(db) -> dict:
             db=db,
             limit=TOP_K,
             min_score=0.0,
+            document_ids=scope,
         )
 
         hits = [

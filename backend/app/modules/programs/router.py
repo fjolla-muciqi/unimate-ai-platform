@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin
+from app.models.faculty import Faculty
 from app.models.program import Program
 from app.models.user import User
 from app.schemas.program import (
@@ -19,6 +20,16 @@ router = APIRouter(
 )
 
 
+def ensure_faculty_exists(faculty_id: int | None, db: Session) -> None:
+    """Një program pa fakultet lejohet; një fakultet që s'ekziston jo."""
+
+    if faculty_id is not None and db.get(Faculty, faculty_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Fakulteti nuk u gjet.",
+        )
+
+
 @router.post(
     "",
     response_model=ProgramResponse,
@@ -29,6 +40,8 @@ def create_program(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
+    ensure_faculty_exists(program_data.faculty_id, db)
+
     program = Program(
         name=program_data.name,
         degree_level=program_data.degree_level,
@@ -36,6 +49,7 @@ def create_program(
         total_ects=program_data.total_ects,
         duration_years=program_data.duration_years,
         description=program_data.description,
+        faculty_id=program_data.faculty_id,
     )
 
     db.add(program)
@@ -101,6 +115,9 @@ def update_program(
     update_data = program_data.model_dump(
         exclude_unset=True
     )
+
+    if "faculty_id" in update_data:
+        ensure_faculty_exists(update_data["faculty_id"], db)
 
     for field, value in update_data.items():
         setattr(program, field, value)

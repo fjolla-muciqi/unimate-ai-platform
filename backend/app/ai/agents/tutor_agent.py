@@ -82,6 +82,7 @@ def collect_material(
     topic: str,
     db: Session,
     course_code: str | None = None,
+    document_ids: list[int] | None = None,
 ) -> str:
     """Mbledh syllabus-in e lëndës dhe fragmentet relevante nga
     dokumentet, si bazë faktike për tutorin."""
@@ -105,10 +106,12 @@ def collect_material(
             if course.syllabus:
                 parts.append(f"Syllabus:\n{course.syllabus}")
 
+    # Vetëm dokumentet që i lejohen përdoruesit (`rag/scope.py`).
     chunks = retrieve_context(
         query=topic,
         db=db,
         limit=6,
+        document_ids=document_ids,
     )
 
     for chunk in chunks:
@@ -158,8 +161,9 @@ def explain_topic(
     db: Session,
     course_code: str | None = None,
     level: str = "intermediate",
+    document_ids: list[int] | None = None,
 ) -> str:
-    material = collect_material(topic, db, course_code)
+    material = collect_material(topic, db, course_code, document_ids)
 
     if not material:
         return (
@@ -180,8 +184,9 @@ def summarize_material(
     topic: str,
     db: Session,
     course_code: str | None = None,
+    document_ids: list[int] | None = None,
 ) -> str:
-    material = collect_material(topic, db, course_code)
+    material = collect_material(topic, db, course_code, document_ids)
 
     if not material:
         return f"Nuk gjeta material mbi '{topic}' për ta përmbledhur."
@@ -197,8 +202,9 @@ def generate_quiz(
     db: Session,
     course_code: str | None = None,
     question_count: int = 5,
+    document_ids: list[int] | None = None,
 ) -> Quiz | None:
-    material = collect_material(topic, db, course_code)
+    material = collect_material(topic, db, course_code, document_ids)
 
     if not material:
         return None
@@ -220,8 +226,9 @@ def generate_flashcards(
     db: Session,
     course_code: str | None = None,
     card_count: int = 8,
+    document_ids: list[int] | None = None,
 ) -> FlashcardSet | None:
-    material = collect_material(topic, db, course_code)
+    material = collect_material(topic, db, course_code, document_ids)
 
     if not material:
         return None
