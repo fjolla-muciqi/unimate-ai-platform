@@ -11,6 +11,7 @@ import type {
   Dashboard,
   Deadline,
   Exam,
+  Faculty,
   MyProfile,
   Notification,
   Professor,
@@ -146,6 +147,7 @@ export const admin = {
   deadlines: resource<Deadline>("/api/deadlines"),
   notifications: resource<Notification>("/api/notifications"),
   programs: resource<Program>("/api/programs"),
+  faculties: resource<Faculty>("/api/faculties"),
 
   users(filters: { role?: string; search?: string } = {}): Promise<AdminUser[]> {
     const query = new URLSearchParams();
@@ -351,6 +353,16 @@ export const api = {
     return request<UniDocument>("/api/documents/upload", {
       method: "POST",
       body: form,
+    });
+  },
+
+  updateDocumentScope(
+    id: number,
+    scope: { faculty_id: number | null; course_id: number | null },
+  ): Promise<UniDocument> {
+    return request<UniDocument>(`/api/documents/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(scope),
     });
   },
 

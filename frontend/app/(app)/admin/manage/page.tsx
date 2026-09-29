@@ -18,6 +18,7 @@ import type {
   Course,
   Deadline,
   Exam,
+  Faculty,
   Notification,
   Professor,
   Program,
@@ -96,6 +97,15 @@ function toApiDateTime(value: string): string {
 // ngarkimin e listës në çdo render.
 const byCode = (a: Course, b: Course) => a.code.localeCompare(b.code);
 
+const byName = (a: { name: string }, b: { name: string }) =>
+  a.name.localeCompare(b.name);
+
+const DEGREE_LEVELS = [
+  { value: "BACHELOR", label: "Bachelor" },
+  { value: "MASTER", label: "Master" },
+  { value: "PHD", label: "Doktoraturë" },
+];
+
 const byDayAndTime = (a: Schedule, b: Schedule) =>
   DAY_ORDER.indexOf(a.day_of_week) - DAY_ORDER.indexOf(b.day_of_week) ||
   a.start_time.localeCompare(b.start_time);
@@ -113,17 +123,20 @@ export default function ManagePage() {
   const [courses, setCourses] = useState<Course[] | null>(null);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [professors, setProfessors] = useState<Professor[]>([]);
+  const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const loadLookups = useCallback(async () => {
     try {
-      const [loadedCourses, loadedPrograms, loadedProfessors] =
+      const [loadedCourses, loadedPrograms, loadedProfessors, loadedFaculties] =
         await Promise.all([
           admin.courses.list(),
           admin.programs.list(),
           api.professors(),
+          admin.faculties.list(),
         ]);
 
+      setFaculties([...loadedFaculties].sort(byName));
       setCourses([...loadedCourses].sort(byCode));
       setPrograms(loadedPrograms);
       setProfessors(loadedProfessors);
@@ -147,6 +160,17 @@ export default function ManagePage() {
         label: `${course.code} — ${course.name}`,
       })),
     [courses],
+  );
+
+  const facultyOptions = useMemo(
+    () => [
+      { value: NONE, label: "Pa fakultet" },
+      ...faculties.map((faculty) => ({
+        value: String(faculty.id),
+        label: faculty.name,
+      })),
+    ],
+    [faculties],
   );
 
   const programOptions = useMemo(
@@ -186,6 +210,29 @@ export default function ManagePage() {
       ? "—"
       : professors.find((professor) => professor.id === id)?.full_name ??
         `#${id}`;
+
+  const facultyName = (id: number | null) =>
+    id === null
+      ? "—"
+      : faculties.find((faculty) => faculty.id === id)?.name ?? `#${id}`;
+
+  const programLabel = (id: number) =>
+    programs.find((program) => program.id === id)?.name ?? `#${id}`;
+
+  const facultyFields: FieldDef[] = [
+    { name: "name", label: "Emri", type: "text", required: true, wide: true },
+    { name: "description", label: "Përshkrimi", type: "textarea", wide: true },
+  ];
+
+  const programFields: FieldDef[] = [
+    { name: "name", label: "Emri", type: "text", required: true },
+    { name: "faculty_id", label: "Fakulteti", type: "select", options: facultyOptions },
+    { name: "degree_level", label: "Niveli", type: "select", required: true, options: DEGREE_LEVELS },
+    { name: "specialization", label: "Drejtimi", type: "text" },
+    { name: "total_ects", label: "ECTS gjithsej", type: "number", required: true },
+    { name: "duration_years", label: "Kohëzgjatja (vite)", type: "number", required: true },
+    { name: "description", label: "Përshkrimi", type: "textarea", wide: true },
+  ];
 
   const courseFields: FieldDef[] = [
     { name: "code", label: "Kodi", type: "text", required: true, placeholder: "CS301" },
@@ -248,6 +295,8 @@ export default function ManagePage() {
 
       <Tabs defaultValue="courses" className="space-y-6">
         <TabsList className="h-auto flex-wrap justify-start">
+          <TabsTrigger value="faculties">Fakultetet</TabsTrigger>
+          <TabsTrigger value="programs">Programet</TabsTrigger>
           <TabsTrigger value="courses">Lëndët</TabsTrigger>
           <TabsTrigger value="schedules">Orari</TabsTrigger>
           <TabsTrigger value="exams">Provimet</TabsTrigger>
@@ -255,6 +304,89 @@ export default function ManagePage() {
           <TabsTrigger value="notifications">Njoftimet</TabsTrigger>
           <TabsTrigger value="users">Përdoruesit</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="faculties">
+          <ResourceManager<Faculty>
+            title="Fakultetet"
+            description="Çdo fakultet ka programet dhe dokumentet e veta; studentët kërkojnë vetëm te dokumentet e fakultetit të tyre."
+            singular="fakultet"
+            resource={admin.faculties}
+            fields={facultyFields}
+            sort={byName}
+            onChange={() => void loadLookups()}
+            deleteWarning="Programet dhe profesorët e këtij fakulteti mbeten, por pa fakultet, dhe dokumentet e tij kalojnë te gjithë universiteti."
+            emptyForm={{ name: "", description: "" }}
+            toForm={(faculty) => ({
+              name: faculty.name,
+              description: faculty.description ?? "",
+            })}
+            toPayload={(values) => ({
+              name: values.name.trim(),
+              description: optionalText(values.description),
+            })}
+            columns={[
+              { header: "Fakulteti", cell: (faculty) => <span className="font-medium">{faculty.name}</span> },
+              {
+                header: "Programe",
+                cell: (faculty) =>
+                  programs.filter((program) => program.faculty_id === faculty.id).length,
+                className: "tabular-nums",
+              },
+            ]}
+          />
+        </TabsContent>
+
+        <TabsContent value="programs">
+          <ResourceManager<Program>
+            title="Programet e studimit"
+            description="Programi lidh studentët dhe lëndët me fakultetin."
+            singular="program"
+            resource={admin.programs}
+            fields={programFields}
+            sort={byName}
+            onChange={() => void loadLookups()}
+            deleteWarning="Fshirja e programit fshin edhe lëndët e tij, me orarin, provimet dhe regjistrimet e tyre."
+            emptyForm={{
+              name: "",
+              faculty_id: facultyOptions[1]?.value ?? NONE,
+              degree_level: "BACHELOR",
+              specialization: "",
+              total_ects: "180",
+              duration_years: "3",
+              description: "",
+            }}
+            toForm={(program) => ({
+              name: program.name,
+              faculty_id: idOrNone(program.faculty_id),
+              degree_level: program.degree_level,
+              specialization: program.specialization ?? "",
+              total_ects: String(program.total_ects),
+              duration_years: String(program.duration_years),
+              description: program.description ?? "",
+            })}
+            toPayload={(values) => ({
+              name: values.name.trim(),
+              faculty_id: optionalId(values.faculty_id),
+              degree_level: values.degree_level,
+              specialization: optionalText(values.specialization),
+              total_ects: Number(values.total_ects),
+              duration_years: Number(values.duration_years),
+              description: optionalText(values.description),
+            })}
+            columns={[
+              { header: "Programi", cell: (program) => <span className="font-medium">{program.name}</span> },
+              { header: "Fakulteti", cell: (program) => facultyName(program.faculty_id) },
+              { header: "Niveli", cell: (program) => labelOf(DEGREE_LEVELS, program.degree_level) },
+              { header: "ECTS", cell: (program) => program.total_ects, className: "tabular-nums" },
+              {
+                header: "Lëndë",
+                cell: (program) =>
+                  (courses ?? []).filter((course) => course.program_id === program.id).length,
+                className: "tabular-nums",
+              },
+            ]}
+          />
+        </TabsContent>
 
         <TabsContent value="courses">
           <ResourceManager<Course>
@@ -299,6 +431,7 @@ export default function ManagePage() {
             columns={[
               { header: "Kodi", cell: (course) => <span className="font-medium">{course.code}</span> },
               { header: "Emri", cell: (course) => course.name },
+              { header: "Programi", cell: (course) => programLabel(course.program_id) },
               { header: "ECTS", cell: (course) => course.ects, className: "tabular-nums" },
               { header: "Sem.", cell: (course) => course.semester, className: "tabular-nums" },
               { header: "Profesori", cell: (course) => professorName(course.professor_id) },

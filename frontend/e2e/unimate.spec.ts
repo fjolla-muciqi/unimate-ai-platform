@@ -100,3 +100,23 @@ test("studenti i ri plotëson profilin dhe merr lëndët", async ({ page }) => {
   await page.goto("/courses");
   await expect(page.getByText("CS101")).toBeVisible();
 });
+
+test("dokumentet grupohen sipas fakultetit dhe lëndës", async ({ page }) => {
+  await login(page, ADMIN.email, ADMIN.password);
+  await page.waitForURL((url) => !url.pathname.startsWith("/login"));
+
+  await page.goto("/documents");
+
+  // Dokument fakulteti dhe dokument lënde nga të dhënat demo.
+  await expect(page.getByText("Rregullorja e Fakultetit Juridik")).toBeVisible();
+  await expect(
+    page.getByText("Semestri 3 · JU201 — E Drejta Penale"),
+  ).toBeVisible();
+
+  // Filtri i fakultetit fsheh dokumentet e fakulteteve të tjera.
+  await page.getByLabel("Fakulteti", { exact: true }).click();
+  await page.getByRole("option", { name: "Fakulteti Juridik" }).click();
+
+  await expect(page.getByText("Rregullorja e Fakultetit Juridik")).toBeVisible();
+  await expect(page.getByText("Syllabus: EM202 Marketing")).toHaveCount(0);
+});

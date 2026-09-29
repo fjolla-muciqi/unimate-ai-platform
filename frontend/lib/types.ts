@@ -140,6 +140,9 @@ export interface UniDocument {
   academic_year: string | null;
   uploaded_by: number;
   uploaded_at: string;
+  // Të dyja bosh: dokumenti i përket gjithë universitetit.
+  faculty_id: number | null;
+  course_id: number | null;
   is_active: boolean;
   status: DocumentStatus;
   status_detail: string | null;
@@ -166,6 +169,12 @@ export interface Notification {
   is_active: boolean;
 }
 
+export interface Faculty {
+  id: number;
+  name: string;
+  description: string | null;
+}
+
 export interface Program {
   id: number;
   name: string;
@@ -174,6 +183,7 @@ export interface Program {
   total_ects: number;
   duration_years: number;
   description: string | null;
+  faculty_id: number | null;
 }
 
 export interface Professor {
