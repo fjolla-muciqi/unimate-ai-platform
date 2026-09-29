@@ -48,3 +48,7 @@ npm-debug.log*
 # Modeli i embeddings i ruajtur lokalisht
 /models/
 backend/models/
+
+# Playwright
+frontend/test-results/
+frontend/playwright-report/

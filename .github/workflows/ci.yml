@@ -1,0 +1,69 @@
+# Kontrolli i vazhdueshëm: çdo push dhe pull request në main.
+#
+# Asnjë hap nuk thërret Claude-in e vërtetë dhe nuk kërkon sekrete:
+# testet e backend-it përdorin SQLite in-memory dhe një klient të
+# simuluar, prandaj CI nuk shpenzon asgjë nga kredia e API-t.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (pytest)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      # Kërkohen nga `Settings`, por testet nuk lidhen kurrë me këtë bazë.
+      DATABASE_URL: postgresql+psycopg://ci:ci@localhost:5432/ci
+      JWT_SECRET_KEY: vetem-per-ci
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      # Torch vetëm për CPU: versioni i paracaktuar sjell CUDA (~2 GB)
+      # që testet nuk e përdorin.
+      - name: Instalo varësitë
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements.txt
+
+      - name: Testet
+        run: pytest -q
+
+  frontend:
+    name: Frontend (build)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+
+      # `next build` kontrollon edhe tipet e TypeScript-it.
+      - name: Build
+        run: npm run build
