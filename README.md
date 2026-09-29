@@ -179,6 +179,14 @@ ata të kolegut te e njëjta lëndë. Këto rregulla jetojnë në një vend të
 vetëm, [`teaching.py`](backend/app/core/teaching.py), që i përdorin
 faqet, agjentët dhe kërkimi.
 
+**Materialet e lëndëve.** Ligjëratat dhe ushtrimet javore ngarkohen
+njëherësh te *Dokumentet → Ngarko materialet e lëndës*. Java dhe lloji
+lexohen nga emri i skedarit (`Java03_Ligjerata.pdf` → "CS201 · Java 3
+· Ligjëratë · Grupi A"). Materialet e një grupi i përdorin vetëm
+studentët e atij grupi, që secili të mësojë nga ligjëratat e profesorit
+të vet; asistenti mund të kërkojë edhe sipas lëndës dhe javës
+(*"çfarë u trajtua në javën 5 të Algoritmeve?"*).
+
 ### Kontrolli kundër përgjigjeve të pavërteta
 
 [`validator_agent.py`](backend/app/ai/agents/validator_agent.py)
@@ -374,7 +382,8 @@ Për të filluar nga zero, fshi volumin: `docker compose down -v`.
 | GET | `/api/admin/students` | **admin** | Studentët me programin dhe numrin e lëndëve, edhe ata pa profil |
 | GET | `/api/admin/students/{user_id}` | **admin** | Lëndët e studentit me grupin dhe profesorin |
 | CRUD | `/api/course-groups` | admin për shkrim | Grupet e lëndëve, secili me profesorin e vet |
-| PATCH | `/api/documents/{id}` | staf | Fakulteti ose lënda e dokumentit, pa ri-indeksim |
+| PATCH | `/api/documents/{id}` | staf | Fakulteti, lënda, grupi, java dhe lloji, pa ri-indeksim |
+| POST | `/api/documents/upload-materials` | staf | Materialet e një lënde njëherësh; java lexohet nga emri i skedarit |
 | GET | `/api/analytics/overview` | **admin** | Metrikat e asistentit |
 | CRUD | `/api/programs`, `/api/courses`, `/api/schedules`, `/api/exams`, `/api/enrollments`, `/api/student-profiles`, `/api/faculties`, `/api/professors` | admin për shkrim | CRUD administrativ |
 
@@ -404,7 +413,7 @@ cd backend
 pytest
 ```
 
-**202 teste** mbi SQLite in-memory — pa Postgres, pa Qdrant dhe pa
+**224 teste** mbi SQLite in-memory — pa Postgres, pa Qdrant dhe pa
 thirrje reale te Claude.
 
 | Skedari | Çfarë mbulon |
@@ -426,6 +435,8 @@ thirrje reale te Claude.
 | `test_evaluation.py` | Metrikat e vlerësimit, kufiri i buxhetit, integriteti i dataset-it |
 | `test_document_scope.py` | Dokumentet sipas fakultetit dhe lëndës, kush në çfarë kërkon |
 | `test_groups.py` | Disa profesorë te e njëjta lëndë, izolimi mes grupeve, caktimi automatik |
+| `test_course_materials.py` | Materialet javore sipas grupit, ngarkimi i shumëfishtë, kërkimi sipas javës |
+| `test_document_naming.py` | Leximi i javës dhe i llojit nga emri i skedarit |
 
 ### End-to-end (Playwright)
 
@@ -574,7 +585,7 @@ dhe MinIO. Ky implementim përdor:
 | MinIO | **Volum lokal Docker** | I abstraktuar; kalimi te S3 prek vetëm një shtresë |
 | Tailwind + shadcn/ui | **Po** | Sipas rekomandimit |
 | React Query | `useEffect` + klient i thjeshtë | Faqet kanë nga një-dy kërkesa; do të ishte peshë e panevojshme |
-| Pytest + FastAPI TestClient | **Po** | 202 teste |
+| Pytest + FastAPI TestClient | **Po** | 224 teste |
 | Playwright | **Po** | 8 teste end-to-end |
 | GitHub Actions | **Po** | `pytest` + `next build` |
 

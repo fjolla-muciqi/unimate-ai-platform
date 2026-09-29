@@ -10,6 +10,7 @@ import {
 } from "react";
 import { Loader2, MapPin, RefreshCw, Trash2, Upload, X } from "lucide-react";
 
+import { MaterialsUpload } from "@/components/documents/materials-upload";
 import {
   DocumentStatusBadge,
   isInFlight,
@@ -48,7 +49,13 @@ import {
 } from "@/components/ui/table";
 import { admin, api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { Course, Faculty, Program, UniDocument } from "@/lib/types";
+import type {
+  Course,
+  CourseGroup,
+  Faculty,
+  Program,
+  UniDocument,
+} from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 
 const DOCUMENT_TYPES = [
@@ -90,6 +97,7 @@ export default function DocumentsPage() {
   const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [courseGroupList, setCourseGroupList] = useState<CourseGroup[]>([]);
 
   // Profesori mund të zgjedhë vetëm lëndët që ligjëron.
   const [myCourseIds, setMyCourseIds] = useState<Set<number> | null>(null);
@@ -133,8 +141,10 @@ export default function DocumentsPage() {
       admin.faculties.list(),
       admin.programs.list(),
       api.courses(),
+      admin.courseGroups.list(),
     ])
-      .then(([loadedFaculties, loadedPrograms, loadedCourses]) => {
+      .then(([loadedFaculties, loadedPrograms, loadedCourses, loadedGroups]) => {
+        setCourseGroupList(loadedGroups);
         setFaculties(
           [...loadedFaculties].sort((a, b) => a.name.localeCompare(b.name)),
         );
@@ -401,6 +411,12 @@ export default function DocumentsPage() {
         );
 
       for (const { course, list } of courseGroups) {
+        // Materialet javë pas jave; dokumentet pa javë (syllabus-i) në fund.
+        list.sort(
+          (a, b) =>
+            (a.week ?? 99) - (b.week ?? 99) || a.title.localeCompare(b.title),
+        );
+
         result.push({
           key: `course-${course?.id}`,
           title: course
@@ -595,6 +611,14 @@ export default function DocumentsPage() {
             </form>
           </CardContent>
         </Card>
+      ) : null}
+
+      {isStaff ? (
+        <MaterialsUpload
+          courses={courseOptions(ALL)}
+          groups={courseGroupList}
+          onUploaded={() => void refresh()}
+        />
       ) : null}
 
       <div className="flex flex-wrap items-end gap-3">

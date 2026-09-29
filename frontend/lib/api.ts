@@ -407,6 +407,13 @@ export const api = {
     });
   },
 
+  uploadMaterials(form: FormData): Promise<UniDocument[]> {
+    return request<UniDocument[]>("/api/documents/upload-materials", {
+      method: "POST",
+      body: form,
+    });
+  },
+
   updateDocumentScope(
     id: number,
     scope: { faculty_id: number | null; course_id: number | null },

@@ -194,6 +194,10 @@ export interface UniDocument {
   // Të dyja bosh: dokumenti i përket gjithë universitetit.
   faculty_id: number | null;
   course_id: number | null;
+  // Materialet e lëndëve: grupi (profesori), java dhe lloji.
+  group_id: number | null;
+  week: number | null;
+  material_type: "LECTURE" | "EXERCISE" | "OTHER" | null;
   is_active: boolean;
   status: DocumentStatus;
   status_detail: string | null;
