@@ -1,3 +1,5 @@
+import re
+import unicodedata
 from dataclasses import dataclass
 
 from sqlalchemy import select
@@ -42,6 +44,51 @@ def load_documents_by_id(
     return {document.id: document for document in documents}
 
 
+# Sa kandidatë merren nga Qdrant për çdo fragment që kthehet, që
+# rirenditja leksikore të ketë nga çfarë të zgjedhë.
+CANDIDATE_POOL = 4
+
+# Fjalë që s'mbajnë kuptim për kërkimin, në shqip dhe anglisht.
+STOPWORDS = {
+    "dhe", "per", "nje", "qe", "nga", "tek", "te", "me", "ne", "se", "si",
+    "sa", "ka", "kam", "jam", "eshte", "jane", "cfare", "cila", "cilat",
+    "cili", "kush", "kur", "ku", "mund", "duhet", "sipas", "mua", "tim",
+    "time", "tende", "the", "and", "for", "what", "how", "when", "where",
+    "which", "who", "can", "does", "are", "with", "from", "that", "this",
+    "your", "have",
+}
+
+
+def _stems(text: str) -> set[str]:
+    """Rrënjët e fjalëve, që "bursë", "bursa" dhe "bursat" të përputhen.
+
+    Shqipja e shpreh rasën dhe shumësin me mbaresa, prandaj krahasohen
+    katër shkronjat e para, pa ë/ç dhe pa fjalët boshe.
+    """
+
+    normalized = unicodedata.normalize("NFKD", text.lower())
+    ascii_text = "".join(
+        char for char in normalized if not unicodedata.combining(char)
+    )
+
+    return {
+        word[:4]
+        for word in re.findall(r"[a-z0-9]+", ascii_text)
+        if len(word) >= 4 and word not in STOPWORDS
+    }
+
+
+def keyword_overlap(query: str, content: str) -> float:
+    """Pjesa e rrënjëve të pyetjes që gjenden në fragment (0 deri 1)."""
+
+    query_stems = _stems(query)
+
+    if not query_stems:
+        return 0.0
+
+    return len(query_stems & _stems(content)) / len(query_stems)
+
+
 def retrieve_context(
     query: str,
     db: Session,
@@ -63,18 +110,30 @@ def retrieve_context(
     if min_score is None:
         min_score = settings.rag_min_score
 
+    weight = settings.rag_keyword_weight
+
     matches = semantic_search(
         query=query,
-        limit=limit,
+        limit=limit * CANDIDATE_POOL if weight else limit,
         document_id=document_id,
     )
 
-    relevant = [
-        match
-        for match in matches
-        if match["score"] is not None
-        and match["score"] >= min_score
-    ]
+    # Kërkim hibrid: modeli i embeddings nuk e lidh gjithmonë një fjalë
+    # të pyetjes ("literatura", "bursë") me fragmentin ku ajo shkruhet
+    # tekstualisht. Pragu mbetet mbi ngjashmërinë semantike.
+    ranked = sorted(
+        (
+            match
+            for match in matches
+            if match["score"] is not None
+            and match["score"] >= min_score
+        ),
+        key=lambda match: match["score"]
+        + weight * keyword_overlap(query, match["content"] or ""),
+        reverse=True,
+    )
+
+    relevant = ranked[:limit]
 
     if not relevant:
         return []

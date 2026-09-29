@@ -96,6 +96,32 @@ def ablation_section(data: dict) -> list[str]:
     ]
 
 
+def hybrid_section(data: dict) -> list[str]:
+    lines = [
+        "## 2b. Kërkimi hibrid: vektorë + përputhje fjalësh",
+        "",
+        "Pesha 0 është kërkimi vetëm semantik. Pesha u zgjodh mbi të "
+        "njëjtat pyetje që e matin, prandaj vlerat janë optimiste për "
+        "pyetje të reja.",
+        "",
+        "| Pesha | Faqja Hit@1 | Faqja Hit@3 | Faqja Hit@5 | MRR |",
+        "|---:|---:|---:|---:|---:|",
+    ]
+
+    for row in data["results"]:
+        page = row["page"]
+        lines.append(
+            f"| {row['keyword_weight']} | {pct(page['hit@1'])} "
+            f"| {pct(page['hit@3'])} | {pct(page['hit@5'])} | {page['mrr']:.3f} |"
+        )
+
+    return lines + [
+        "",
+        f"Prodhimi përdor peshën {data['production_keyword_weight']}.",
+        "",
+    ]
+
+
 def agents_section(data: dict) -> list[str]:
     rows = [row for row in data["rows"] if "error" not in row]
     errors = [row for row in data["rows"] if "error" in row]
@@ -236,6 +262,7 @@ def baseline_section(agents: dict, baseline: dict) -> list[str]:
 def main() -> None:
     retrieval = load("retrieval.json")
     ablation = load("chunking_ablation.json")
+    hybrid = load("hybrid_ablation.json")
     agents = load("agents.json")
     baseline = load("baseline.json")
 
@@ -246,6 +273,9 @@ def main() -> None:
 
     if ablation:
         lines += ablation_section(ablation)
+
+    if hybrid:
+        lines += hybrid_section(hybrid)
 
     if agents:
         lines += agents_section(agents)

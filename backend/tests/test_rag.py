@@ -1,5 +1,7 @@
 """Chunking dhe retrieval, pa Qdrant dhe pa embeddings reale."""
 
+import pytest
+
 from app.ai.rag.chunking import split_text_into_chunks
 from app.ai.rag.ingestion import (
     INTERRUPTED_DETAIL,
@@ -204,3 +206,40 @@ def test_pdf_line_breaks_are_not_paragraphs():
     chunks = split_text_into_chunks("e hënë deri\ne premte, 09:00-13:00.")
 
     assert chunks == ["e hënë deri e premte, 09:00-13:00."]
+
+
+def test_keyword_overlap_matches_albanian_inflections():
+    overlap = retriever.keyword_overlap(
+        "Cilat janë kushtet për bursë akademike?",
+        "Bursat. Aplikimi për bursën akademike hapet më 1 nëntor.",
+    )
+
+    # "kushtet" mungon; "bursë" dhe "akademike" përputhen.
+    assert overlap == pytest.approx(2 / 3)
+    assert retriever.keyword_overlap("çfarë kur ku", "çfarëdo") == 0.0
+
+
+def test_keyword_match_can_outrank_a_closer_vector(
+    db_session, admin_user, monkeypatch
+):
+    document = _add_document(db_session, admin_user, is_active=True)
+
+    unrelated = _match(document.id, 0.60, chunk_id=1)
+    literature = _match(document.id, 0.50, chunk_id=2)
+    literature["content"] = "Literatura: Cormen, Introduction to Algorithms."
+
+    monkeypatch.setattr(
+        retriever,
+        "semantic_search",
+        lambda **kwargs: [unrelated, literature],
+    )
+
+    def top_chunk(weight: float) -> int:
+        monkeypatch.setattr(retriever.settings, "rag_keyword_weight", weight)
+
+        return retriever.retrieve_context(
+            query="Cila është literatura?", db=db_session, limit=1, min_score=0.25
+        )[0].chunk_id
+
+    assert top_chunk(0.0) == 1
+    assert top_chunk(0.3) == 2

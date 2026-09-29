@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     rag_chunk_size: int = 500
     rag_chunk_overlap: int = 120
 
+    # Pesha e përputhjes së fjalëve te renditja hibride; 0 = vetëm vektorë.
+    # 0.3 është fillimi i pllajës te `evaluation/hybrid_ablation.py`;
+    # peshat më të larta fitojnë pak më shumë, por rrezikojnë t'u japin
+    # fjalëve kyçe përparësi mbi kuptimin.
+    rag_keyword_weight: float = 0.3
+
     anthropic_api_key: str | None = None
     llm_model: str = "claude-sonnet-5"
     llm_max_tokens: int = 8000
