@@ -163,6 +163,22 @@ asnjë tool nuk pranon një id studenti nga modeli
 ([`tools.py`](backend/app/ai/agents/tools.py)). Guardrail-i e ndalon
 tentativën herët dhe e regjistron; kodi e bën atë të pamundur.
 
+### Fakultetet, grupet dhe dokumentet
+
+Çdo dokument i përket gjithë universitetit, një fakulteti ose një
+lënde, dhe asistenti kërkon vetëm aty ku përdoruesi ka të drejtë:
+studenti në dokumentet e universitetit, të fakultetit dhe të lëndëve të
+programit të vet; profesori në ato të fakultetit dhe të lëndëve që jep
+([`scope.py`](backend/app/ai/rag/scope.py)). Filtri zbatohet brenda
+Qdrant-it.
+
+E njëjta lëndë mund të jepet nga disa profesorë, secili te **grupi** i
+vet. Studenti regjistrohet në një grup dhe sheh profesorin dhe
+ushtrimet e tij; profesori sheh vetëm studentët e grupeve të veta, jo
+ata të kolegut te e njëjta lëndë. Këto rregulla jetojnë në një vend të
+vetëm, [`teaching.py`](backend/app/core/teaching.py), që i përdorin
+faqet, agjentët dhe kërkimi.
+
 ### Kontrolli kundër përgjigjeve të pavërteta
 
 [`validator_agent.py`](backend/app/ai/agents/validator_agent.py)
@@ -355,6 +371,10 @@ Për të filluar nga zero, fshi volumin: `docker compose down -v`.
 | GET | `/api/admin/audit-logs/summary` | **admin** | Ngjarjet sipas llojit |
 | GET | `/api/admin/users` | **admin** | Përdoruesit, me filtër roli dhe kërkim |
 | PATCH | `/api/admin/users/{id}` | **admin** | Aktivizo / çaktivizo llogarinë (jo veten) |
+| GET | `/api/admin/students` | **admin** | Studentët me programin dhe numrin e lëndëve, edhe ata pa profil |
+| GET | `/api/admin/students/{user_id}` | **admin** | Lëndët e studentit me grupin dhe profesorin |
+| CRUD | `/api/course-groups` | admin për shkrim | Grupet e lëndëve, secili me profesorin e vet |
+| PATCH | `/api/documents/{id}` | staf | Fakulteti ose lënda e dokumentit, pa ri-indeksim |
 | GET | `/api/analytics/overview` | **admin** | Metrikat e asistentit |
 | CRUD | `/api/programs`, `/api/courses`, `/api/schedules`, `/api/exams`, `/api/enrollments`, `/api/student-profiles`, `/api/faculties`, `/api/professors` | admin për shkrim | CRUD administrativ |
 
@@ -384,7 +404,7 @@ cd backend
 pytest
 ```
 
-**180 teste** mbi SQLite in-memory — pa Postgres, pa Qdrant dhe pa
+**202 teste** mbi SQLite in-memory — pa Postgres, pa Qdrant dhe pa
 thirrje reale te Claude.
 
 | Skedari | Çfarë mbulon |
@@ -404,10 +424,12 @@ thirrje reale te Claude.
 | `test_chat_api.py` | Bisedat, historiku, privatësia mes përdoruesve |
 | `test_analytics.py` | Metrikat e panelit dhe feedback-u i studentëve |
 | `test_evaluation.py` | Metrikat e vlerësimit, kufiri i buxhetit, integriteti i dataset-it |
+| `test_document_scope.py` | Dokumentet sipas fakultetit dhe lëndës, kush në çfarë kërkon |
+| `test_groups.py` | Disa profesorë te e njëjta lëndë, izolimi mes grupeve, caktimi automatik |
 
 ### End-to-end (Playwright)
 
-Gjashtë teste kundrejt sistemit që po punon në Docker: kyçja dhe paneli,
+Tetë teste kundrejt sistemit që po punon në Docker: kyçja dhe paneli,
 fjalëkalimi i gabuar, menutë sipas rolit, bllokimi nga Guardrail-i në
 chat, shtimi dhe fshirja e një njoftimi nga admini, dhe regjistrimi i
 një studenti të ri deri te lëndët e tij. Asnjë nuk arrin te Claude.
@@ -552,8 +574,8 @@ dhe MinIO. Ky implementim përdor:
 | MinIO | **Volum lokal Docker** | I abstraktuar; kalimi te S3 prek vetëm një shtresë |
 | Tailwind + shadcn/ui | **Po** | Sipas rekomandimit |
 | React Query | `useEffect` + klient i thjeshtë | Faqet kanë nga një-dy kërkesa; do të ishte peshë e panevojshme |
-| Pytest + FastAPI TestClient | **Po** | 180 teste |
-| Playwright | **Po** | 6 teste end-to-end |
+| Pytest + FastAPI TestClient | **Po** | 202 teste |
+| Playwright | **Po** | 8 teste end-to-end |
 | GitHub Actions | **Po** | `pytest` + `next build` |
 
 Këto zgjedhje duhen përmendur në kapitullin e teknologjive.

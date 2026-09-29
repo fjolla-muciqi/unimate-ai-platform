@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { admin, api } from "@/lib/api";
 import type {
   Course,
+  CourseGroup,
   Deadline,
   Exam,
   Faculty,
@@ -100,6 +101,10 @@ const byCode = (a: Course, b: Course) => a.code.localeCompare(b.code);
 const byName = (a: { name: string }, b: { name: string }) =>
   a.name.localeCompare(b.name);
 
+const byGroup = (a: CourseGroup, b: CourseGroup) =>
+  (a.course_code ?? "").localeCompare(b.course_code ?? "") ||
+  a.name.localeCompare(b.name);
+
 const DEGREE_LEVELS = [
   { value: "BACHELOR", label: "Bachelor" },
   { value: "MASTER", label: "Master" },
@@ -124,18 +129,26 @@ export default function ManagePage() {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [professors, setProfessors] = useState<Professor[]>([]);
   const [faculties, setFaculties] = useState<Faculty[]>([]);
+  const [groups, setGroups] = useState<CourseGroup[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const loadLookups = useCallback(async () => {
     try {
-      const [loadedCourses, loadedPrograms, loadedProfessors, loadedFaculties] =
-        await Promise.all([
-          admin.courses.list(),
-          admin.programs.list(),
-          api.professors(),
-          admin.faculties.list(),
-        ]);
+      const [
+        loadedCourses,
+        loadedPrograms,
+        loadedProfessors,
+        loadedFaculties,
+        loadedGroups,
+      ] = await Promise.all([
+        admin.courses.list(),
+        admin.programs.list(),
+        api.professors(),
+        admin.faculties.list(),
+        admin.courseGroups.list(),
+      ]);
 
+      setGroups(loadedGroups);
       setFaculties([...loadedFaculties].sort(byName));
       setCourses([...loadedCourses].sort(byCode));
       setPrograms(loadedPrograms);
@@ -171,6 +184,19 @@ export default function ManagePage() {
       })),
     ],
     [faculties],
+  );
+
+  const groupOptions = useMemo(
+    () => [
+      { value: NONE, label: "Gjithë lënda (e përbashkët)" },
+      ...groups.map((group) => ({
+        value: String(group.id),
+        label: `${group.course_code} · ${group.name}${
+          group.professor_name ? ` — ${group.professor_name}` : ""
+        }`,
+      })),
+    ],
+    [groups],
   );
 
   const programOptions = useMemo(
@@ -245,8 +271,19 @@ export default function ManagePage() {
     { name: "syllabus", label: "Syllabus-i", type: "textarea", wide: true },
   ];
 
+  const groupName = (id: number | null) =>
+    id === null ? "E përbashkët" : groups.find((group) => group.id === id)?.name ?? `#${id}`;
+
+  const groupFields: FieldDef[] = [
+    { name: "course_id", label: "Lënda", type: "select", required: true, options: courseOptions },
+    { name: "name", label: "Emri i grupit", type: "text", required: true, placeholder: "Grupi B" },
+    { name: "professor_id", label: "Profesori", type: "select", options: professorOptions },
+    { name: "capacity", label: "Kapaciteti", type: "number", placeholder: "Pa kufi" },
+  ];
+
   const scheduleFields: FieldDef[] = [
     { name: "course_id", label: "Lënda", type: "select", required: true, options: courseOptions },
+    { name: "group_id", label: "Grupi", type: "select", options: groupOptions },
     { name: "day_of_week", label: "Dita", type: "select", required: true, options: DAY_OPTIONS },
     { name: "start_time", label: "Fillon", type: "time", required: true },
     { name: "end_time", label: "Mbaron", type: "time", required: true },
@@ -298,6 +335,7 @@ export default function ManagePage() {
           <TabsTrigger value="faculties">Fakultetet</TabsTrigger>
           <TabsTrigger value="programs">Programet</TabsTrigger>
           <TabsTrigger value="courses">Lëndët</TabsTrigger>
+          <TabsTrigger value="groups">Grupet</TabsTrigger>
           <TabsTrigger value="schedules">Orari</TabsTrigger>
           <TabsTrigger value="exams">Provimet</TabsTrigger>
           <TabsTrigger value="deadlines">Afatet</TabsTrigger>
@@ -439,6 +477,48 @@ export default function ManagePage() {
           />
         </TabsContent>
 
+        <TabsContent value="groups">
+          <ResourceManager<CourseGroup>
+            title="Grupet e lëndëve"
+            description="E njëjta lëndë mund të jepet nga disa profesorë, secili te grupi i vet. Studenti sheh profesorin dhe ushtrimet e grupit të tij."
+            singular="grup"
+            resource={admin.courseGroups}
+            fields={groupFields}
+            sort={byGroup}
+            onChange={() => void loadLookups()}
+            deleteWarning="Studentët e grupit mbeten të regjistruar në lëndë, por pa grup; orari i veçantë i grupit fshihet."
+            emptyForm={{
+              course_id: courseOptions[0]?.value ?? "",
+              name: "",
+              professor_id: NONE,
+              capacity: "",
+            }}
+            toForm={(group) => ({
+              course_id: String(group.course_id),
+              name: group.name,
+              professor_id: idOrNone(group.professor_id),
+              capacity: group.capacity === null ? "" : String(group.capacity),
+            })}
+            toPayload={(values) => ({
+              course_id: Number(values.course_id),
+              name: values.name.trim(),
+              professor_id: optionalId(values.professor_id),
+              capacity: values.capacity.trim() ? Number(values.capacity) : null,
+            })}
+            columns={[
+              { header: "Lënda", cell: (group) => <span className="font-medium">{group.course_code}</span> },
+              { header: "Grupi", cell: (group) => group.name },
+              { header: "Profesori", cell: (group) => group.professor_name ?? "—" },
+              { header: "Studentë", cell: (group) => group.student_count, className: "tabular-nums" },
+              {
+                header: "Kapaciteti",
+                cell: (group) => group.capacity ?? "Pa kufi",
+                className: "tabular-nums",
+              },
+            ]}
+          />
+        </TabsContent>
+
         <TabsContent value="schedules">
           <ResourceManager<Schedule>
             title="Orari javor"
@@ -449,6 +529,7 @@ export default function ManagePage() {
             sort={byDayAndTime}
             emptyForm={{
               course_id: courseOptions[0]?.value ?? "",
+              group_id: NONE,
               day_of_week: "Monday",
               start_time: "09:00",
               end_time: "10:30",
@@ -456,6 +537,7 @@ export default function ManagePage() {
             }}
             toForm={(slot) => ({
               course_id: String(slot.course_id),
+              group_id: idOrNone(slot.group_id),
               day_of_week: slot.day_of_week,
               start_time: formatTime(slot.start_time),
               end_time: formatTime(slot.end_time),
@@ -463,6 +545,7 @@ export default function ManagePage() {
             })}
             toPayload={(values) => ({
               course_id: Number(values.course_id),
+              group_id: optionalId(values.group_id),
               day_of_week: values.day_of_week,
               start_time: toApiTime(values.start_time),
               end_time: toApiTime(values.end_time),
@@ -476,6 +559,7 @@ export default function ManagePage() {
                 className: "tabular-nums",
               },
               { header: "Lënda", cell: (slot) => courseCode(slot.course_id) },
+              { header: "Grupi", cell: (slot) => groupName(slot.group_id) },
               { header: "Salla", cell: (slot) => slot.room ?? "—" },
             ]}
           />

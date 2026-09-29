@@ -83,6 +83,12 @@ const NAV_ITEMS: NavItem[] = [
     roles: ["ADMIN"],
   },
   {
+    href: "/admin/students",
+    label: "Studentët",
+    icon: GraduationCap,
+    roles: ["ADMIN"],
+  },
+  {
     href: "/admin/manage",
     label: "Menaxhimi",
     icon: Settings2,

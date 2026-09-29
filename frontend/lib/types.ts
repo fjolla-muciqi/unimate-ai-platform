@@ -108,9 +108,60 @@ export interface Course {
   professor_id: number | null;
 }
 
+/** Lënda siç e sheh studenti: me grupin dhe profesorin e grupit. */
+export interface StudentCourse extends Course {
+  group_id: number | null;
+  group_name: string | null;
+  teacher_name: string | null;
+}
+
+export interface CourseGroup {
+  id: number;
+  course_id: number;
+  name: string;
+  professor_id: number | null;
+  capacity: number | null;
+  course_code: string | null;
+  professor_name: string | null;
+  student_count: number;
+}
+
+export interface AdminStudentRow {
+  user_id: number;
+  full_name: string;
+  email: string;
+  is_active: boolean;
+  student_profile_id: number | null;
+  student_number: string | null;
+  program_id: number | null;
+  program_name: string | null;
+  academic_year: number | null;
+  semester: number | null;
+  course_count: number;
+}
+
+export interface AdminStudentCourse {
+  enrollment_id: number;
+  course_id: number;
+  code: string;
+  name: string;
+  semester: number;
+  ects: number;
+  group_id: number | null;
+  group_name: string | null;
+  teacher_name: string | null;
+  status: string;
+}
+
+export interface AdminStudentDetail extends AdminStudentRow {
+  courses: AdminStudentCourse[];
+}
+
 export interface Schedule {
   id: number;
   course_id: number;
+  // Bosh: ligjëratë e përbashkët për gjithë lëndën.
+  group_id: number | null;
   day_of_week: string;
   start_time: string;
   end_time: string;
@@ -319,6 +370,7 @@ export interface ProfessorStudent {
   academic_year: number;
   course_code: string;
   course_name: string;
+  group_name: string | null;
 }
 
 export interface ProfessorDashboard {

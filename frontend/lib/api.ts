@@ -1,5 +1,7 @@
 import type {
   AdminOverview,
+  AdminStudentDetail,
+  AdminStudentRow,
   AdminUser,
   AnalyticsOverview,
   AuditLog,
@@ -8,6 +10,7 @@ import type {
   Conversation,
   ConversationDetail,
   Course,
+  CourseGroup,
   Dashboard,
   Deadline,
   Exam,
@@ -20,6 +23,7 @@ import type {
   ProfessorStudent,
   Program,
   Schedule,
+  StudentCourse,
   UniDocument,
   User,
 } from "./types";
@@ -148,6 +152,53 @@ export const admin = {
   notifications: resource<Notification>("/api/notifications"),
   programs: resource<Program>("/api/programs"),
   faculties: resource<Faculty>("/api/faculties"),
+  courseGroups: resource<CourseGroup>("/api/course-groups"),
+
+  students(
+    filters: { search?: string; programId?: string } = {},
+  ): Promise<AdminStudentRow[]> {
+    const query = new URLSearchParams();
+
+    if (filters.search) {
+      query.set("search", filters.search);
+    }
+
+    if (filters.programId) {
+      query.set("program_id", filters.programId);
+    }
+
+    const suffix = query.toString() ? `?${query}` : "";
+
+    return request<AdminStudentRow[]>(`/api/admin/students${suffix}`);
+  },
+
+  student(userId: number): Promise<AdminStudentDetail> {
+    return request<AdminStudentDetail>(`/api/admin/students/${userId}`);
+  },
+
+  enroll(payload: {
+    student_profile_id: number;
+    course_id: number;
+    group_id: number | null;
+  }): Promise<void> {
+    return request<void>("/api/enrollments", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  changeGroup(enrollmentId: number, groupId: number | null): Promise<void> {
+    return request<void>(`/api/enrollments/${enrollmentId}`, {
+      method: "PUT",
+      body: JSON.stringify({ group_id: groupId }),
+    });
+  },
+
+  unenroll(enrollmentId: number): Promise<void> {
+    return request<void>(`/api/enrollments/${enrollmentId}`, {
+      method: "DELETE",
+    });
+  },
 
   users(filters: { role?: string; search?: string } = {}): Promise<AdminUser[]> {
     const query = new URLSearchParams();
@@ -251,8 +302,8 @@ export const api = {
     return request<Dashboard>("/api/student/me/dashboard");
   },
 
-  myCourses(): Promise<Course[]> {
-    return request<Course[]>("/api/student/me/courses");
+  myCourses(): Promise<StudentCourse[]> {
+    return request<StudentCourse[]>("/api/student/me/courses");
   },
 
   mySchedule(): Promise<Schedule[]> {

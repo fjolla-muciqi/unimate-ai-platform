@@ -17,11 +17,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { api } from "@/lib/api";
-import type { Course, Professor, Schedule } from "@/lib/types";
+import type { Professor, Schedule, StudentCourse } from "@/lib/types";
 import { DAY_LABELS, DAY_ORDER, formatTime } from "@/lib/utils";
 
 export default function CoursesPage() {
-  const [courses, setCourses] = useState<Course[] | null>(null);
+  const [courses, setCourses] = useState<StudentCourse[] | null>(null);
   const [schedule, setSchedule] = useState<Schedule[]>([]);
   const [professors, setProfessors] = useState<Professor[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -111,12 +111,14 @@ export default function CoursesPage() {
                 <CardContent className="mt-auto space-y-3 text-sm">
                   <div>
                     <p className="text-xs text-muted-foreground">
-                      Ligjërues
+                      Ligjërues{course.group_name ? ` · ${course.group_name}` : ""}
                     </p>
                     <p className="font-medium">
-                      {professor
-                        ? `${professor.title ?? ""} ${professor.full_name}`.trim()
-                        : "I pacaktuar"}
+                      {/* Profesori i grupit të studentit; pa grup, koordinatori. */}
+                      {course.teacher_name ??
+                        (professor
+                          ? `${professor.title ?? ""} ${professor.full_name}`.trim()
+                          : "I pacaktuar")}
                     </p>
                   </div>
 

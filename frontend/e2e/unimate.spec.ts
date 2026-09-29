@@ -120,3 +120,27 @@ test("dokumentet grupohen sipas fakultetit dhe lëndës", async ({ page }) => {
   await expect(page.getByText("Rregullorja e Fakultetit Juridik")).toBeVisible();
   await expect(page.getByText("Syllabus: EM202 Marketing")).toHaveCount(0);
 });
+
+test("administratori ndryshon grupin e një studenti", async ({ page }) => {
+  await login(page, ADMIN.email, ADMIN.password);
+  await page.waitForURL((url) => !url.pathname.startsWith("/login"));
+
+  await page.goto("/admin/students");
+  await page.getByLabel("Kërko student").fill("Krasniqi");
+  await page.getByRole("button", { name: "Kërko" }).click();
+  await page.getByRole("link", { name: "Arta Krasniqi" }).click();
+
+  const row = page.getByRole("row", { name: /CS201/ });
+  await expect(row).toContainText("Arben Hoxha");
+
+  const changeTo = async (group: string, teacher: string) => {
+    await row.getByRole("combobox").click();
+    await page.getByRole("option", { name: new RegExp(`^${group}`) }).click();
+    await expect(row).toContainText(teacher);
+  };
+
+  await changeTo("Grupi B", "Elira Berisha");
+
+  // Kthehet si ishte, që testi të mos ndryshojë të dhënat e demos.
+  await changeTo("Grupi A", "Arben Hoxha");
+});

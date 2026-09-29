@@ -47,14 +47,17 @@ function StatCard({
   value,
   hint,
   icon: Icon,
+  href,
 }: {
   label: string;
   value: number;
   hint?: string;
   icon: typeof Users;
+  /** Karta të çon te lista e plotë, jo vetëm te numri. */
+  href?: string;
 }) {
-  return (
-    <Card>
+  const card = (
+    <Card className={href ? "transition-colors hover:border-primary/50" : undefined}>
       <CardContent className="flex items-start justify-between gap-4 p-5">
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground">{label}</p>
@@ -71,6 +74,8 @@ function StatCard({
       </CardContent>
     </Card>
   );
+
+  return href ? <Link href={href}>{card}</Link> : card;
 }
 
 export default function AdminPage() {
@@ -121,6 +126,7 @@ export default function AdminPage() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Studentë"
+          href="/admin/students"
           value={overview.total_students}
           hint={`${overview.total_professors} profesorë, ${overview.total_admins} admin`}
           icon={Users}

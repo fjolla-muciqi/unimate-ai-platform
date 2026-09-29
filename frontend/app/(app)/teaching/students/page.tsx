@@ -126,6 +126,7 @@ function StudentsView() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Studenti</TableHead>
+                    <TableHead>Grupi</TableHead>
                     <TableHead>Numri</TableHead>
                     <TableHead>Viti</TableHead>
                     <TableHead>Email</TableHead>
@@ -139,6 +140,7 @@ function StudentsView() {
                         {student.full_name}
                       </TableCell>
 
+                      <TableCell>{student.group_name ?? "—"}</TableCell>
                       <TableCell className="tabular-nums">
                         {student.student_number}
                       </TableCell>
