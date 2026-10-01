@@ -337,7 +337,7 @@ def upload_materials(
 
     Java dhe lloji lexohen nga emri i çdo skedari ("Java03_Ligjerata.pdf");
     `material_type` i dhënë këtu vlen për skedarët ku emri s'e tregon.
-    Titulli ndërtohet si "CS201 · Java 3 · Ligjëratë · Grupi A".
+    Titulli ndërtohet si "SKI-305 · Java 3 · Ligjëratë · Grupi A".
     """
 
     scope = resolve_scope(None, course_id, current_user, db, group_id)

@@ -8,11 +8,14 @@ class EnrollmentCreate(BaseModel):
     course_id: int = Field(ge=1)
     # Bosh: grupi me më pak studentë, nëse lënda ka grupe.
     group_id: int | None = None
+    # Bosh: periudha e vitit akademik aktual që i përgjigjet semestrit.
+    period_id: int | None = None
     status: str = Field(default="ACTIVE", min_length=2, max_length=50)
 
 
 class EnrollmentUpdate(BaseModel):
     group_id: int | None = None
+    period_id: int | None = None
     status: str | None = Field(default=None, min_length=2, max_length=50)
 
 
@@ -21,6 +24,7 @@ class EnrollmentResponse(BaseModel):
     student_profile_id: int
     course_id: int
     group_id: int | None = None
+    period_id: int | None = None
     status: str
     enrolled_at: datetime
 

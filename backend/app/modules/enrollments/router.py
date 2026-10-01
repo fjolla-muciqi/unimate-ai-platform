@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.audit import record_event
 from app.core.database import get_db
+from app.core.periods import ensure_period_exists, period_for_semester
 from app.core.teaching import group_belongs_to_course, least_filled_group
 from app.core.security import get_current_user, require_admin
 from app.models.audit_log import AuditEvent
@@ -71,10 +72,19 @@ def create_enrollment(
         group = least_filled_group(course.id, db)
         group_id = group.id if group else None
 
+    ensure_period_exists(enrollment_data.period_id, db)
+
+    period_id = enrollment_data.period_id
+
+    if period_id is None:
+        period = period_for_semester(course.semester, db)
+        period_id = period.id if period else None
+
     enrollment = Enrollment(
         student_profile_id=enrollment_data.student_profile_id,
         course_id=enrollment_data.course_id,
         group_id=group_id,
+        period_id=period_id,
         status=enrollment_data.status,
     )
 
@@ -202,6 +212,8 @@ def update_enrollment(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Grupi nuk i përket kësaj lënde.",
         )
+
+    ensure_period_exists(update_data.get("period_id"), db)
 
     for field, value in update_data.items():
         setattr(enrollment, field, value)

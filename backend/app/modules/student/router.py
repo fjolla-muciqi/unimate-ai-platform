@@ -4,6 +4,7 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.periods import current_period, period_for_semester
 from app.core.teaching import (
     least_filled_group,
     student_sees_schedule,
@@ -324,8 +325,9 @@ def get_my_dashboard(
         full_name=f"{current_user.first_name} {current_user.last_name}",
         student_number=profile.student_number,
         program_name=program.name if program else "",
-        academic_year=profile.academic_year,
+        study_year=profile.study_year,
         semester=profile.semester,
+        **academic_context(profile, db),
         active_courses=len(active_course_ids),
         today=today,
         today_schedule=[
@@ -367,6 +369,24 @@ def get_my_dashboard(
     )
 
 
+def academic_context(profile: StudentProfile, db: Session) -> dict:
+    """Fakulteti, viti akademik dhe periudha e semestrit të studentit."""
+
+    program = db.get(Program, profile.program_id)
+    faculty = program.faculty if program else None
+
+    period = period_for_semester(profile.semester, db)
+    academic_year = period or current_period(db)
+
+    return {
+        "faculty_name": faculty.name if faculty else None,
+        "degree_level": program.degree_level if program else None,
+        "academic_year": academic_year.academic_year if academic_year else None,
+        "period_label": period.label if period else None,
+        "ects_is_official": program.ects_is_official if program else False,
+    }
+
+
 def build_my_profile(
     current_user: User,
     profile: StudentProfile,
@@ -379,9 +399,10 @@ def build_my_profile(
         email=current_user.email,
         student_number=profile.student_number,
         program_name=program.name if program else None,
-        academic_year=profile.academic_year,
+        study_year=profile.study_year,
         semester=profile.semester,
         preferred_language=profile.preferred_language,
+        **academic_context(profile, db),
     )
 
 
@@ -465,25 +486,25 @@ def create_my_profile(
             detail="Programi nuk u gjet.",
         )
 
-    if payload.academic_year > program.duration_years:
+    if payload.study_year > program.duration_years:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
                 f"Programi zgjat {program.duration_years} vite; "
-                f"viti {payload.academic_year} nuk ekziston."
+                f"viti {payload.study_year} nuk ekziston."
             ),
         )
 
     # Viti N përmban semestrat 2N-1 dhe 2N.
     if payload.semester not in (
-        2 * payload.academic_year - 1,
-        2 * payload.academic_year,
+        2 * payload.study_year - 1,
+        2 * payload.study_year,
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
                 f"Semestri {payload.semester} nuk i përket vitit "
-                f"{payload.academic_year}."
+                f"{payload.study_year}."
             ),
         )
 
@@ -492,7 +513,7 @@ def create_my_profile(
         # I pandryshueshëm dhe unik, sepse id-ja e përdoruesit është unike.
         student_number=f"{utcnow().year}-{current_user.id:05d}",
         program_id=program.id,
-        academic_year=payload.academic_year,
+        study_year=payload.study_year,
         semester=payload.semester,
         preferred_language=payload.preferred_language,
     )
@@ -509,6 +530,9 @@ def create_my_profile(
         )
     ).all()
 
+    # Të gjitha lëndët janë të të njëjtit semestër, pra të së njëjtës periudhë.
+    period = period_for_semester(payload.semester, db)
+
     for course in courses:
         # Te lëndët me disa grupe, studenti shkon te grupi me më pak
         # studentë; admini mund ta ndryshojë më vonë.
@@ -519,6 +543,7 @@ def create_my_profile(
                 student_profile_id=profile.id,
                 course_id=course.id,
                 group_id=group.id if group else None,
+                period_id=period.id if period else None,
             )
         )
 

@@ -143,7 +143,7 @@ def academic_data(db_session, student_user):
         user_id=student_user.id,
         student_number="2024-CS-001",
         program_id=program.id,
-        academic_year=2,
+        study_year=2,
         semester=3,
     )
 

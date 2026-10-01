@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -28,6 +28,14 @@ class Program(Base):
         Integer,
         nullable=False,
         default=180,
+    )
+
+    # False: shpërndarja e ECTS-ve nëpër lëndë është demonstrative, jo
+    # zyrtare. Ndërfaqja dhe asistenti e shënojnë qartë.
+    ects_is_official: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
     )
 
     duration_years: Mapped[int] = mapped_column(

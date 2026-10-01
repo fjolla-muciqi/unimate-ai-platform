@@ -213,7 +213,7 @@ def get_my_students(
             full_name=f"{user.first_name} {user.last_name}",
             email=user.email,
             student_number=profile.student_number,
-            academic_year=profile.academic_year,
+            study_year=profile.study_year,
             course_code=course.code,
             course_name=course.name,
             group_name=group.name if group else None,

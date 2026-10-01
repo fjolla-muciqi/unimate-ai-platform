@@ -254,7 +254,7 @@ def test_new_student_completes_profile_and_is_enrolled(
 
     created = client.post(
         "/api/student/me/profile",
-        json={"program_id": program_id, "academic_year": 2, "semester": 3},
+        json={"program_id": program_id, "study_year": 2, "semester": 3},
         headers=headers,
     )
 
@@ -275,7 +275,7 @@ def test_profile_can_be_completed_only_once(client, academic_data):
     headers = register_student(client)
     payload = {
         "program_id": academic_data["profile"].program_id,
-        "academic_year": 1,
+        "study_year": 1,
         "semester": 1,
     }
 
@@ -295,7 +295,7 @@ def test_profile_rejects_impossible_year_and_semester(client, academic_data):
 
     wrong_semester = client.post(
         "/api/student/me/profile",
-        json={"program_id": program_id, "academic_year": 1, "semester": 5},
+        json={"program_id": program_id, "study_year": 1, "semester": 5},
         headers=headers,
     )
     assert wrong_semester.status_code == 400
@@ -303,7 +303,7 @@ def test_profile_rejects_impossible_year_and_semester(client, academic_data):
     # Programi i fixture-it zgjat tre vite.
     too_late = client.post(
         "/api/student/me/profile",
-        json={"program_id": program_id, "academic_year": 4, "semester": 7},
+        json={"program_id": program_id, "study_year": 4, "semester": 7},
         headers=headers,
     )
     assert too_late.status_code == 400
@@ -312,7 +312,7 @@ def test_profile_rejects_impossible_year_and_semester(client, academic_data):
         "/api/student/me/profile",
         json={
             "program_id": program_id,
-            "academic_year": 1,
+            "study_year": 1,
             "semester": 1,
             "student_number": "2024-CS-001",
         },

@@ -53,7 +53,7 @@ def other_student(db_session, academic_data):
         user_id=user.id,
         student_number="2024-CS-002",
         program_id=academic_data["program"].id,
-        academic_year=2,
+        study_year=2,
         semester=3,
     )
 

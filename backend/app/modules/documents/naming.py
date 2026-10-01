@@ -73,7 +73,7 @@ def material_title(
     group_name: str | None,
     file_name: str,
 ) -> str:
-    """"CS201 · Java 4 · Ligjëratë · Grupi A", që citimet të jenë të qarta."""
+    """"SKI-305 · Java 4 · Ligjëratë · Grupi A", që citimet të jenë të qarta."""
 
     if week is None:
         return Path(file_name).stem

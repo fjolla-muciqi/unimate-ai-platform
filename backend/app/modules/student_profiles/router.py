@@ -80,7 +80,7 @@ def create_student_profile(
         user_id=profile_data.user_id,
         student_number=profile_data.student_number,
         program_id=profile_data.program_id,
-        academic_year=profile_data.academic_year,
+        study_year=profile_data.study_year,
         semester=profile_data.semester,
         preferred_language=profile_data.preferred_language,
     )

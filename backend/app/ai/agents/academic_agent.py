@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
+from app.core.periods import period_for_semester
 from app.core.teaching import student_sees_schedule, teacher_of_enrollment
 from app.models.course import Course
 from app.models.course_group import CourseGroup
@@ -190,15 +191,35 @@ def answer_profile(profile: StudentProfile, db: Session) -> str:
 
     program_name = program.name if program else "i panjohur"
     degree = program.degree_level if program else "i panjohur"
+    faculty = program.faculty.name if program and program.faculty else None
+    period = period_for_semester(profile.semester, db)
 
-    return (
-        "Profili akademik i studentit:\n"
-        f"- Numri i studentit: {profile.student_number}\n"
-        f"- Programi: {program_name} ({degree})\n"
-        f"- Viti akademik: {profile.academic_year}\n"
-        f"- Semestri aktual: {profile.semester}\n"
-        f"- Gjuha e preferuar: {profile.preferred_language}"
-    )
+    lines = [
+        "Profili akademik i studentit:",
+        f"- Numri i studentit: {profile.student_number}",
+    ]
+
+    if faculty:
+        lines.append(f"- Fakulteti: {faculty}")
+
+    lines += [
+        f"- Programi: {program_name} ({degree})",
+        f"- Viti i studimit: {profile.study_year}",
+        f"- Semestri i kurrikulës: {profile.semester}",
+    ]
+
+    if period is not None:
+        lines.append(f"- Periudha akademike: {period.label}")
+
+    if program is not None and not program.ects_is_official:
+        lines.append(
+            "- Shënim: ECTS-të e lëndëve në sistem janë demonstrative, "
+            "jo zyrtare."
+        )
+
+    lines.append(f"- Gjuha e preferuar: {profile.preferred_language}")
+
+    return "\n".join(lines)
 
 
 def answer_course_catalog(

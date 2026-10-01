@@ -26,7 +26,7 @@ class StudentProfile(Base):
         nullable=False,
     )
 
-    academic_year: Mapped[int] = mapped_column(
+    study_year: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
     )

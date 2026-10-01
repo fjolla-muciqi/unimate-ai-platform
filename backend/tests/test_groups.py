@@ -59,7 +59,7 @@ def groups(db_session, teaching, academic_data):
         user_id=blerta.id,
         student_number="2024-CS-002",
         program_id=academic_data["program"].id,
-        academic_year=2,
+        study_year=2,
         semester=3,
     )
     db_session.add(blerta_profile)
@@ -277,7 +277,7 @@ def test_enrollment_without_group_goes_to_the_least_filled_group(
     student_headers = auth_headers(login(client, "dren@test.edu", "Student123!"))
     client.post(
         "/api/student/me/profile",
-        json={"program_id": academic_data["program"].id, "academic_year": 1, "semester": 1},
+        json={"program_id": academic_data["program"].id, "study_year": 1, "semester": 1},
         headers=student_headers,
     )
 
@@ -348,7 +348,7 @@ def test_onboarding_balances_new_students_across_groups(
         )
         client.post(
             "/api/student/me/profile",
-            json={"program_id": academic_data["program"].id, "academic_year": 2, "semester": 3},
+            json={"program_id": academic_data["program"].id, "study_year": 2, "semester": 3},
             headers=auth_headers(login(client, email, "Student123!")),
         )
 

@@ -286,7 +286,7 @@ def student_row(
         student_number=profile.student_number if profile else None,
         program_id=profile.program_id if profile else None,
         program_name=program.name if program else None,
-        academic_year=profile.academic_year if profile else None,
+        study_year=profile.study_year if profile else None,
         semester=profile.semester if profile else None,
         course_count=course_count or 0,
     )
@@ -299,7 +299,7 @@ def student_row(
 def list_students(
     search: str | None = Query(default=None, max_length=100),
     program_id: int | None = Query(default=None),
-    academic_year: int | None = Query(default=None),
+    study_year: int | None = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
 ):
@@ -325,8 +325,8 @@ def list_students(
     if program_id is not None:
         query = query.where(StudentProfile.program_id == program_id)
 
-    if academic_year is not None:
-        query = query.where(StudentProfile.academic_year == academic_year)
+    if study_year is not None:
+        query = query.where(StudentProfile.study_year == study_year)
 
     rows = db.execute(query.order_by(User.last_name, User.first_name)).all()
 
@@ -385,6 +385,9 @@ def get_student(
                     group_name=group.name if group else None,
                     teacher_name=teacher.full_name if teacher else None,
                     status=enrollment.status,
+                    period_label=(
+                        enrollment.period.label if enrollment.period else None
+                    ),
                 )
             )
 

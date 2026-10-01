@@ -6,6 +6,7 @@ from app.core.config import settings
 from app.core.database import engine
 from app.modules.auth.router import router as auth_router
 from app.modules.programs.router import router as programs_router
+from app.modules.academic_periods.router import router as academic_periods_router
 from app.modules.courses.router import router as courses_router
 from app.modules.course_groups.router import router as course_groups_router
 from app.modules.schedules.router import router as schedules_router
@@ -39,6 +40,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(programs_router)
+app.include_router(academic_periods_router)
 app.include_router(courses_router)
 app.include_router(course_groups_router)
 app.include_router(schedules_router)

@@ -228,11 +228,11 @@ def test_tutor_tools_report_missing_material_without_artifact(
 
 
 @pytest.mark.parametrize(
-    ("academic_year", "expected"),
+    ("study_year", "expected"),
     [(1, "beginner"), (2, "intermediate"), (3, "advanced"), (4, "advanced")],
 )
-def test_level_follows_the_academic_year(academic_year, expected):
-    profile = SimpleNamespace(academic_year=academic_year)
+def test_level_follows_the_study_year(study_year, expected):
+    profile = SimpleNamespace(study_year=study_year)
 
     assert tutor_agent.level_for_student(profile) == expected
 
@@ -253,7 +253,7 @@ def test_explain_tool_adapts_to_the_student_unless_asked_otherwise(
     )
 
     # Studenti i fixture-it është në vitin e dytë.
-    context.profile.academic_year = 1
+    context.profile.study_year = 1
     execute_tool("explain_topic", {"topic": "pemët"}, context)
 
     execute_tool(

@@ -38,6 +38,14 @@ class Enrollment(Base):
         index=True,
     )
 
+    # Periudha akademike kur studenti e ndjek lëndën (p.sh. 2026/2027
+    # dimërore). Bosh për regjistrimet pa periudhë të caktuar.
+    period_id: Mapped[int | None] = mapped_column(
+        ForeignKey("academic_periods.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
     status: Mapped[str] = mapped_column(
         String(50),
         default="ACTIVE",
@@ -59,3 +67,5 @@ class Enrollment(Base):
         "Course",
         back_populates="enrollments",
     )
+
+    period = relationship("AcademicPeriod")

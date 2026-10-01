@@ -243,7 +243,7 @@ def answer_students(
 
         by_course.setdefault(label, []).append(
             f"{user.first_name} {user.last_name} — "
-            f"nr. {profile.student_number}, viti {profile.academic_year}"
+            f"nr. {profile.student_number}, viti {profile.study_year}"
         )
 
     sections = []

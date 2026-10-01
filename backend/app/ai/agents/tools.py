@@ -148,7 +148,7 @@ TOOL_DEFINITIONS: list[dict] = [
                 "course_code": {
                     "type": "string",
                     "description": (
-                        "Kufizo te materialet e një lënde (p.sh. CS201), "
+                        "Kufizo te materialet e një lënde (p.sh. SKI-305), "
                         "kur pyetja është për një lëndë të caktuar."
                     ),
                 },
@@ -192,7 +192,7 @@ TOOL_DEFINITIONS: list[dict] = [
             "properties": {
                 "course_code": {
                     "type": "string",
-                    "description": "Kodi i lëndës, p.sh. CS201.",
+                    "description": "Kodi i lëndës, p.sh. SKI-305.",
                 },
             },
             "required": ["course_code"],
@@ -265,7 +265,7 @@ TOOL_DEFINITIONS: list[dict] = [
                 "course_code": {
                     "type": "string",
                     "description": (
-                        "Kodi i lëndës, p.sh. CS201, kur pyetja është "
+                        "Kodi i lëndës, p.sh. SKI-305, kur pyetja është "
                         "për një lëndë të vetme."
                     ),
                 },
@@ -327,7 +327,7 @@ TOOL_DEFINITIONS: list[dict] = [
                 "course_code": {
                     "type": "string",
                     "description": (
-                        "Kufizo te një lëndë e vetme, p.sh. CS201."
+                        "Kufizo te një lëndë e vetme, p.sh. SKI-305."
                     ),
                 },
             },

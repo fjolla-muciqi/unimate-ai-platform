@@ -45,8 +45,18 @@ class DashboardResponse(BaseModel):
     full_name: str
     student_number: str
     program_name: str
-    academic_year: int
+    study_year: int
     semester: int
+
+    # Katër koncepte të ndara: viti i studimit (1-3), semestri i
+    # kurrikulës (1-6), viti akademik ("2026/2027") dhe periudha.
+    faculty_name: str | None = None
+    degree_level: str | None = None
+    academic_year: str | None = None
+    period_label: str | None = None
+
+    # False: ECTS-të e lëndëve janë demonstrative, jo zyrtare.
+    ects_is_official: bool = False
 
     active_courses: int
 
@@ -79,7 +89,7 @@ class ProfessorStudent(BaseModel):
     full_name: str
     email: str
     student_number: str
-    academic_year: int
+    study_year: int
     course_code: str
     course_name: str
     group_name: str | None = None

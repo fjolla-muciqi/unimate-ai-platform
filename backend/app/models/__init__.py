@@ -6,6 +6,7 @@ from app.models.student_profile import StudentProfile
 from app.models.course import Course
 from app.models.course_prerequisite import CoursePrerequisite
 from app.models.course_group import CourseGroup
+from app.models.academic_period import AcademicPeriod
 from app.models.enrollment import Enrollment
 from app.models.schedule import Schedule
 from app.models.exam import Exam
@@ -27,6 +28,7 @@ __all__ = [
     "Course",
     "CoursePrerequisite",
     "CourseGroup",
+    "AcademicPeriod",
     "Enrollment",
     "Schedule",
     "Exam",

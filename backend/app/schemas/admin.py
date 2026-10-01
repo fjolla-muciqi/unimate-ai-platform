@@ -86,7 +86,7 @@ class AdminStudentRow(BaseModel):
     student_number: str | None = None
     program_id: int | None = None
     program_name: str | None = None
-    academic_year: int | None = None
+    study_year: int | None = None
     semester: int | None = None
     course_count: int = 0
 
@@ -102,6 +102,8 @@ class AdminStudentCourse(BaseModel):
     group_name: str | None
     teacher_name: str | None
     status: str
+    # P.sh. "2026/2027, periudha dimërore": kur u ndoq lënda.
+    period_label: str | None = None
 
 
 class AdminStudentDetail(AdminStudentRow):
