@@ -47,8 +47,10 @@ administratorit.
 
 ### Provoje demon në një minutë
 
-1. Kyçu si **student** → paneli tregon lëndët, orarin e sotëm, provimet
-   e ardhshme dhe progresin në ECTS, të gjitha nga baza e të dhënave.
+1. Kyçu si **student** → paneli tregon strukturën akademike (viti i
+   studimit, semestri, viti akademik dhe periudha), lëndët, orarin e
+   sotëm, provimet e ardhshme dhe progresin në ECTS, të gjitha nga baza
+   e të dhënave. Kutia *Afate & njoftime* hap listën e plotë.
 2. Hap **Asistenti AI** dhe pyet *"Kur e kam provimin e radhës?"* →
    përgjigjen e jep **Schedule and Deadline Agent** nga të dhënat e tua.
 3. Pyet *"Sa herë mund ta jap një provim sipas rregullores?"* →
@@ -64,7 +66,7 @@ administratorit.
    regjistrin e sigurisë, me përdoruesin, rregullën dhe kohën.
 7. Regjistro një llogari të re → faqja *Plotëso profilin akademik* →
    zgjidh programin dhe semestrin → lëndët e semestrit shfaqen vetë.
-8. Te `/admin/manage` shto një provim për CS202 → pyet asistentin si
+8. Te `/admin/manage` shto një provim për SKI-303 → pyet asistentin si
    student *"Kur e kam provimin e radhës?"* dhe përgjigjja e përfshin.
 
 ## Arkitektura
@@ -181,11 +183,38 @@ faqet, agjentët dhe kërkimi.
 
 **Materialet e lëndëve.** Ligjëratat dhe ushtrimet javore ngarkohen
 njëherësh te *Dokumentet → Ngarko materialet e lëndës*. Java dhe lloji
-lexohen nga emri i skedarit (`Java03_Ligjerata.pdf` → "CS201 · Java 3
+lexohen nga emri i skedarit (`Java03_Ligjerata.pdf` → "SKI-305 · Java 3
 · Ligjëratë · Grupi A"). Materialet e një grupi i përdorin vetëm
 studentët e atij grupi, që secili të mësojë nga ligjëratat e profesorit
 të vet; asistenti mund të kërkojë edhe sipas lëndës dhe javës
 (*"çfarë u trajtua në javën 5 të Algoritmeve?"*).
+
+### Struktura akademike
+
+Programi demo, *Shkenca Kompjuterike dhe Inxhinieri* (Bachelor, 3 vite,
+6 semestra, 180 ECTS), ndjek kurrikulën reale: 6 lëndë për semestër, me
+emrat dhe semestrat e planit mësimor
+([`curriculum.py`](backend/scripts/curriculum.py)). Fakulteti dhe
+programi janë entitete të ndara edhe pse kanë të njëjtin emër. Kodet
+`SKI-101…SKI-606` dhe shpërndarja e ECTS-ve (30 për semestër; Tema e
+Diplomës 8) janë **demonstrative, jo zyrtare**: programi e shënon me
+`ects_is_official = false` dhe ndërfaqja e tregon; administratori i
+ndryshon te *Menaxhimi → Lëndët / Programet*.
+
+Katër koncepte mbahen të ndara:
+
+| Koncepti | Shembull | Ku ruhet |
+|---|---|---|
+| Viti i studimit | 2 | `StudentProfile.study_year` |
+| Semestri i kurrikulës | 3 | `StudentProfile.semester`, `Course.semester` |
+| Viti akademik | 2026/2027 | `AcademicPeriod.academic_year` |
+| Periudha kur ndiqet lënda | 2026/2027, dimërore | `Enrollment.period_id` → `AcademicPeriod` |
+
+Viti N përmban semestrat 2N-1 dhe 2N; semestrat tek mbahen në periudhën
+dimërore, çiftet në verore. Regjistrimi i ri merr vetë periudhën e vitit
+akademik aktual që i përgjigjet semestrit të lëndës
+([`periods.py`](backend/app/core/periods.py)); periudhat dhe ajo aktuale
+menaxhohen te *Menaxhimi → Periudhat*.
 
 ### Kontrolli kundër përgjigjeve të pavërteta
 
@@ -280,10 +309,14 @@ npm run dev
 `python -m scripts.seed` është idempotent — mund ta rithërrasësh pa
 krijuar dublikatë. Krijon:
 
-- 1 admin, 1 student demo dhe 14 kolegë të kohortës
-- 1 fakultet, 1 program, 2 profesorë **me llogari kyçjeje** të lidhura
-  me rreshtat `Professor`
-- 6 lëndë me syllabus dhe parakushte, orar javor, provime
+- 1 admin, 1 student demo (viti 2, semestri 3) dhe 14 kolegë të
+  kohortës, me lëndët e vitit të parë të përfunduara në 2025/2026
+- fakultetin dhe programin *Shkenca Kompjuterike dhe Inxhinieri* me 36
+  lëndë (6 për semestër), parakushte dhe 2 profesorë **me llogari
+  kyçjeje** të lidhura me rreshtat `Professor`
+- periudhat akademike 2025/2026 dhe 2026/2027 (aktuale: 2026/2027
+  dimërore)
+- orarin javor dhe provimet e semestrit 3, me dy grupe te SKI-305
 - 4 afate administrative dhe 2 njoftime
 - **3 dokumente PDF të gjeneruara** (rregullore, syllabus, udhëzues),
   të indeksuara automatikisht në Qdrant
@@ -291,7 +324,15 @@ krijuar dublikatë. Krijon:
 PDF-të gjenerohen nga
 [`demo_documents.py`](backend/scripts/demo_documents.py) me faqe të
 vërteta, që citimet të kenë numër faqeje — një `.txt` do të citohej pa
-faqe.
+faqe. Kur teksti i një PDF-je demo ndryshon, seed-i e rishkruan dhe e
+ri-indekson vetë.
+
+Seed-i nuk e rikthen strukturën që administratori ka ndryshuar: një
+fakultet demo i fshirë nuk rikrijohet, dhe programi i krijuar nga
+administratori me emrin e programit demo përdoret ashtu siç është. Një
+bazë me kurrikulën e mëparshme (lëndët `CS101…CS304`) kalon te
+`SKI-xxx` një herë, në vend: regjistrimet, grupet, materialet dhe
+bisedat ekzistuese mbeten.
 
 ## Pipeline-i i dokumenteve
 
@@ -382,6 +423,7 @@ Për të filluar nga zero, fshi volumin: `docker compose down -v`.
 | GET | `/api/admin/students` | **admin** | Studentët me programin dhe numrin e lëndëve, edhe ata pa profil |
 | GET | `/api/admin/students/{user_id}` | **admin** | Lëndët e studentit me grupin dhe profesorin |
 | CRUD | `/api/course-groups` | admin për shkrim | Grupet e lëndëve, secili me profesorin e vet |
+| CRUD | `/api/academic-periods` | admin për shkrim | Periudhat akademike (viti akademik + dimërore/verore), njëra aktuale |
 | POST / PUT | `/api/professors` | **admin** | Me `password` krijon ose rivendos llogarinë e kyçjes së profesorit |
 | PATCH | `/api/documents/{id}` | staf | Fakulteti, lënda, grupi, java dhe lloji, pa ri-indeksim |
 | POST | `/api/documents/upload-materials` | staf | Materialet e një lënde njëherësh; java lexohet nga emri i skedarit |
@@ -414,7 +456,7 @@ cd backend
 pytest
 ```
 
-**232 teste** mbi SQLite in-memory — pa Postgres, pa Qdrant dhe pa
+**244 teste** mbi SQLite in-memory — pa Postgres, pa Qdrant dhe pa
 thirrje reale te Claude.
 
 | Skedari | Çfarë mbulon |
@@ -429,7 +471,7 @@ thirrje reale te Claude.
 | `test_agent_tools.py` | Tools akademike dhe numërimi i qëndrueshëm i burimeve |
 | `test_agent_routing.py` | Harta tool→agjent, regjistrimi i agjentëve |
 | `test_agent_loop.py` | Cikli agentik me klient të simuluar: `tool_result`, thirrjet paralele, gabimet, kufiri i iteracioneve |
-| `test_tutor.py` | Mbledhja e materialit, niveli sipas vitit akademik, quiz dhe flashcards si artifacts |
+| `test_tutor.py` | Mbledhja e materialit, niveli sipas vitit të studimit, quiz dhe flashcards si artifacts |
 | `test_validator.py` | Heqja e citimeve të shpikura, shënimi i pyetjeve pa përgjigje |
 | `test_chat_api.py` | Bisedat, historiku, privatësia mes përdoruesve |
 | `test_analytics.py` | Metrikat e panelit dhe feedback-u i studentëve |
@@ -439,10 +481,11 @@ thirrje reale te Claude.
 | `test_course_materials.py` | Materialet javore sipas grupit, ngarkimi i shumëfishtë, kërkimi sipas javës |
 | `test_document_naming.py` | Leximi i javës dhe i llojit nga emri i skedarit |
 | `test_professor_accounts.py` | Krijimi i profesorit me llogari, rivendosja e fjalëkalimit, çaktivizimi |
+| `test_academic_periods.py` | Periudhat akademike, periudha aktuale, regjistrimi sipas semestrit, viti i studimit |
 
 ### End-to-end (Playwright)
 
-Nëntë teste kundrejt sistemit që po punon në Docker: kyçja dhe paneli,
+Njëmbëdhjetë teste kundrejt sistemit që po punon në Docker: kyçja dhe paneli,
 fjalëkalimi i gabuar, menutë sipas rolit, bllokimi nga Guardrail-i në
 chat, shtimi dhe fshirja e një njoftimi nga admini, dhe regjistrimi i
 një studenti të ri deri te lëndët e tij. Asnjë nuk arrin te Claude.
@@ -566,6 +609,11 @@ kyç, jo me vlerësim njerëzor; pesha e kërkimit hibrid u zgjodh mbi të
 njëjtat pyetje që e matin. Pyetja e vetme e drejtuar gabim (`T04`,
 "përmbledhje e temave të CS203") mori përgjigje të saktë nga Academic
 Agent-i, që lexoi syllabus-in në vend të Tutor-it.
+
+Vlerësimi u krye mbi versionin e mëparshëm të kurrikulës demo (lëndët
+`CS201`, `CS202`, `CS203`; commit `845b794`). Me kalimin te kurrikula
+`SKI-xxx` pyetjet e dataset-it nuk u rishkruan dhe rezultatet mbeten
+ato të matura atëherë.
 
 ```bash
 docker compose exec api python -m evaluation.run_retrieval      # falas
