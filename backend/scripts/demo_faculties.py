@@ -1,19 +1,22 @@
-"""Fakultetet shtesë të demos, me programe, lëndë dhe dokumente.
+"""Fakultetet shtesë të demos, me programe, lëndë dhe dokumente FIKTIVE.
 
-Fakulteti "Shkenca Kompjuterike dhe Inxhinieri" vjen nga `seed.py` dhe
-`curriculum.py`; këtu shtohen tre fakultete të tjera, secili me program
-trevjeçar, dy lëndë për semestër, një profesor me llogari dhe dokumentet
-e veta.
+Fakulteti kryesor, "Shkenca Kompjuterike dhe Inxhinieri", vjen nga
+`seed.py` dhe `curriculum.py`. Këtu janë katër fakultete dytësore, secili
+me program trevjeçar, dy lëndë për semestër, një profesor fiktiv me
+llogari dhe dy dokumente fiktive (rregullorja dhe një syllabus).
 
-Dokumentet e reja u përkasin vetëm fakulteteve të reja. Kështu
-studentja demo (Shkenca Kompjuterike dhe Inxhinieri) kërkon në të njëjtat dokumente si
-në vlerësimin e tezës, dhe rezultatet e saj mbeten të vlefshme.
+Ekzistojnë që kufizimi sipas fakultetit të provohet me të dhëna të
+huaja: studentët e Shkencave Kompjuterike nuk duhet t'i shohin këto
+dokumente. Asnjë e dhënë këtu nuk i përket një personi ose institucioni
+real.
 """
+
+FICTIONAL = "Dokument fiktiv për demonstrim. "
 
 # Lëndët: (kodi, emri, ECTS, semestri, përshkrimi).
 EXTRA_FACULTIES = [
     {
-        "faculty": "Fakulteti i Ekonomisë dhe Menaxhmentit",
+        "faculty": "Menaxhment, Biznes dhe Ekonomi",
         "description": "Programet e ekonomisë, menaxhmentit dhe informatikës së biznesit.",
         "program": {
             "name": "Menaxhment dhe Informatikë Biznesi",
@@ -52,18 +55,18 @@ EXTRA_FACULTIES = [
         ],
     },
     {
-        "faculty": "Fakulteti Juridik",
-        "description": "Programet e drejtësisë dhe të shkencave juridike.",
+        "faculty": "Shkenca Politike",
+        "description": "Programet e shkencave politike dhe të marrëdhënieve ndërkombëtare.",
         "program": {
-            "name": "Drejtësi",
+            "name": "Shkenca Politike",
             "degree_level": "BACHELOR",
-            "specialization": "E Drejta Publike dhe Private",
+            "specialization": "Marrëdhënie Ndërkombëtare",
             "total_ects": 180,
             "duration_years": 3,
-            "description": "E drejta kushtetuese, penale, civile dhe ndërkombëtare.",
+            "description": "Sistemet politike, politikat publike dhe marrëdhëniet ndërkombëtare.",
             "graduation_requirements": (
-                "180 ECTS, klinika juridike prej 4 javësh dhe mbrojtja e "
-                "punimit të diplomës."
+                "180 ECTS, pjesëmarrja në simulimin e Kombeve të Bashkuara "
+                "dhe mbrojtja e punimit të diplomës."
             ),
         },
         "professor": {
@@ -74,20 +77,59 @@ EXTRA_FACULTIES = [
             "office": "D-201",
             "consultation_hours": "E mërkurë 11:00-13:00, zyra D-201",
         },
-        "teaches": ["JU201", "JU303"],
+        "teaches": ["SP201", "SP303"],
         "courses": [
-            ("JU101", "Hyrje në të Drejtën", 6, 1, "Burimet e së drejtës, normat juridike dhe sistemet juridike."),
-            ("JU102", "E Drejta Romake", 6, 1, "Institutet e së drejtës romake dhe ndikimi i tyre sot."),
-            ("JU103", "E Drejta Kushtetuese", 6, 2, "Kushtetuta, ndarja e pushteteve dhe të drejtat themelore."),
-            ("JU104", "Historia e Shtetit dhe e së Drejtës", 6, 2, "Zhvillimi i institucioneve shtetërore dhe juridike."),
-            ("JU201", "E Drejta Penale", 6, 3, "Vepra penale, fajësia dhe sanksionet penale."),
-            ("JU202", "E Drejta Civile", 6, 3, "Personat, pronësia, detyrimet dhe kontratat."),
-            ("JU203", "E Drejta Administrative", 6, 4, "Administrata publike, aktet dhe procedura administrative."),
-            ("JU204", "E Drejta e Punës", 6, 4, "Marrëdhënia e punës, kontrata dhe mbrojtja e punëtorit."),
-            ("JU301", "E Drejta Ndërkombëtare Publike", 6, 5, "Shtetet, traktatet dhe organizatat ndërkombëtare."),
-            ("JU302", "E Drejta e Biznesit", 6, 5, "Shoqëritë tregtare, kontratat tregtare dhe falimentimi."),
-            ("JU303", "Procedura Penale", 6, 6, "Hetimi, akuza, gjykimi dhe mjetet juridike."),
-            ("JU304", "Punimi i Diplomës", 6, 6, "Hulumtimi juridik dhe mbrojtja e punimit."),
+            ("SP101", "Hyrje në Shkenca Politike", 6, 1, "Shteti, pushteti, legjitimiteti dhe ideologjitë politike."),
+            ("SP102", "Historia e Mendimit Politik", 6, 1, "Nga Platoni dhe Aristoteli te mendimi politik modern."),
+            ("SP103", "Sistemet Politike Krahasuese", 6, 2, "Sistemet parlamentare, presidenciale dhe gjysmëpresidenciale."),
+            ("SP104", "Metodat e Kërkimit në Shkencat Sociale", 6, 2, "Pyetësorët, intervistat, analiza e përmbajtjes dhe statistika bazë."),
+            ("SP201", "Marrëdhëniet Ndërkombëtare", 6, 3, "Teoritë realiste, liberale dhe konstruktiviste; sistemi ndërkombëtar."),
+            ("SP202", "Politikat Publike", 6, 3, "Cikli i politikave publike, hartimi, zbatimi dhe vlerësimi."),
+            ("SP203", "Integrimi Evropian", 6, 4, "Institucionet e Bashkimit Evropian dhe procesi i zgjerimit."),
+            ("SP204", "Administrata Publike", 6, 4, "Organizimi i administratës, shërbimi civil dhe reforma."),
+            ("SP301", "Sjellja Politike dhe Zgjedhjet", 6, 5, "Sistemet zgjedhore, partitë dhe sjellja e votuesve."),
+            ("SP302", "Diplomacia dhe Negociatat", 6, 5, "Diplomacia bilaterale dhe multilaterale, teknikat e negocimit."),
+            ("SP303", "Siguria Ndërkombëtare", 6, 6, "Konfliktet, aleancat, terrorizmi dhe siguria njerëzore."),
+            ("SP304", "Punimi i Diplomës", 6, 6, "Hulumtimi politologjik dhe mbrojtja e punimit."),
+        ],
+    },
+    {
+        "faculty": "Media dhe Komunikim",
+        "description": "Programet e gazetarisë, medias digjitale dhe komunikimit.",
+        "program": {
+            "name": "Media dhe Komunikim",
+            "degree_level": "BACHELOR",
+            "specialization": "Media Digjitale",
+            "total_ects": 180,
+            "duration_years": 3,
+            "description": "Gazetaria, prodhimi mediatik dhe komunikimi strategjik.",
+            "graduation_requirements": (
+                "180 ECTS, praktika në redaksi prej 4 javësh, portofoli me "
+                "punime të publikuara dhe mbrojtja e punimit të diplomës."
+            ),
+        },
+        "professor": {
+            "first_name": "Dafina",
+            "last_name": "Hasani",
+            "title": "Doc. Dr.",
+            "email": "dafina.hasani@unimate.edu",
+            "office": "F-08",
+            "consultation_hours": "E martë 13:00-15:00, zyra F-08",
+        },
+        "teaches": ["MK201", "MK301"],
+        "courses": [
+            ("MK101", "Hyrje në Komunikim", 6, 1, "Modelet e komunikimit, komunikimi masiv dhe ndërpersonal."),
+            ("MK102", "Historia e Medias", 6, 1, "Shtypi, radioja, televizioni dhe interneti."),
+            ("MK103", "Shkrimi Gazetaresk", 6, 2, "Lajmi, reportazhi, intervista dhe redaktimi."),
+            ("MK104", "Fotografia Digjitale", 6, 2, "Kompozimi, drita dhe përpunimi i fotografisë."),
+            ("MK201", "Komunikimi Digjital dhe Mediat Sociale", 6, 3, "Platformat sociale, algoritmet, përmbajtja dhe analitika."),
+            ("MK202", "Etika e Medias", 6, 3, "Kodet etike, privatësia, burimet dhe dezinformimi."),
+            ("MK203", "Prodhimi Audio-Vizual", 6, 4, "Skenari, xhirimi, montazhi dhe zëri."),
+            ("MK204", "Marrëdhëniet me Publikun", 6, 4, "Komunikimi institucional, krizat dhe mediat."),
+            ("MK301", "Gazetaria Hulumtuese", 6, 5, "Verifikimi i fakteve, të dhënat dhe dokumentet publike."),
+            ("MK302", "Analiza e Audiencës", 6, 5, "Matja e audiencës, sondazhet dhe analitika digjitale."),
+            ("MK303", "Komunikimi Strategjik", 6, 6, "Fushatat, mesazhet dhe planifikimi i komunikimit."),
+            ("MK304", "Punimi i Diplomës", 6, 6, "Projekti mediatik ose hulumtimi dhe mbrojtja e tij."),
         ],
     },
     {
@@ -137,14 +179,14 @@ EXTRA_FACULTIES = [
 FACULTY_DOCUMENTS: list[dict] = [
     {
         "file_name": "rregullorja-fakulteti-ekonomise.pdf",
-        "title": "Rregullorja e Fakultetit të Ekonomisë dhe Menaxhmentit",
+        "title": "Rregullorja e Fakultetit Menaxhment, Biznes dhe Ekonomi",
         "document_type": "REGULATION",
-        "description": "Praktika profesionale, vlerësimi dhe punimi i diplomës.",
+        "description": FICTIONAL + "Praktika profesionale, vlerësimi dhe punimi i diplomës.",
         "academic_year": "2025/2026",
-        "faculty": "Fakulteti i Ekonomisë dhe Menaxhmentit",
+        "faculty": "Menaxhment, Biznes dhe Ekonomi",
         "pages": [
             [
-                ("h1", "Rregullorja e Fakultetit të Ekonomisë dhe Menaxhmentit"),
+                ("h1", "Rregullorja e Fakultetit Menaxhment, Biznes dhe Ekonomi"),
                 ("h2", "Neni 1 — Praktika profesionale"),
                 ("p", "Studentët e vitit të tretë kryejnë praktikë profesionale "
                       "prej gjashtë javësh në një ndërmarrje ose institucion, "
@@ -175,7 +217,7 @@ FACULTY_DOCUMENTS: list[dict] = [
         "file_name": "syllabus-em202-marketing.pdf",
         "title": "Syllabus: EM202 Marketing",
         "document_type": "SYLLABUS",
-        "description": "Përmbajtja dhe vlerësimi i lëndës EM202.",
+        "description": FICTIONAL + "Përmbajtja dhe vlerësimi i lëndës EM202.",
         "academic_year": "2025/2026",
         "course": "EM202",
         "pages": [
@@ -199,63 +241,126 @@ FACULTY_DOCUMENTS: list[dict] = [
         ],
     },
     {
-        "file_name": "rregullorja-fakulteti-juridik.pdf",
-        "title": "Rregullorja e Fakultetit Juridik",
+        "file_name": "rregullorja-fakulteti-shkenca-politike.pdf",
+        "title": "Rregullorja e Fakultetit Shkenca Politike",
         "document_type": "REGULATION",
-        "description": "Provimet me gojë, klinika juridike dhe frekuentimi.",
-        "academic_year": "2025/2026",
-        "faculty": "Fakulteti Juridik",
+        "description": FICTIONAL + "Frekuentimi, esetë seminarike, simulimi i OKB-së dhe diploma.",
+        "academic_year": "2026/2027",
+        "faculty": "Shkenca Politike",
         "pages": [
             [
-                ("h1", "Rregullorja e Fakultetit Juridik"),
+                ("h1", "Rregullorja e Fakultetit Shkenca Politike"),
                 ("h2", "Neni 1 — Frekuentimi"),
-                ("p", "Pjesëmarrja në ligjërata dhe ushtrime është e "
-                      "detyrueshme në masën 75 për qind. Studenti që nuk e "
-                      "plotëson këtë kusht nuk lejohet në provimin e rregullt "
-                      "dhe e jep lëndën në afatin e shtatorit."),
-                ("h2", "Neni 2 — Provimet"),
-                ("p", "Provimet e lëndëve E Drejta Penale, E Drejta Civile dhe "
-                      "Procedura Penale përbëhen nga një pjesë me shkrim dhe "
-                      "një pjesë me gojë. Pjesa me gojë jepet vetëm pasi "
-                      "studenti ka kaluar pjesën me shkrim me së paku 50 pikë."),
+                ("p", "Pjesëmarrja në seminare është e detyrueshme në masën 70 "
+                      "për qind. Studenti që mungon më shumë se katër seminare "
+                      "pa arsye të dokumentuar humb të drejtën për eseun "
+                      "seminarik të asaj lënde."),
+                ("h2", "Neni 2 — Eseu seminarik"),
+                ("p", "Çdo lëndë e vitit të dytë dhe të tretë kërkon një ese "
+                      "seminarike prej 2 500 deri në 3 500 fjalë, e shkruar "
+                      "sipas stilit të citimit Chicago. Eseu dorëzohet në javën "
+                      "e dymbëdhjetë dhe vlen 25 për qind të notës."),
             ],
             [
-                ("h2", "Neni 3 — Klinika juridike"),
-                ("p", "Në vitin e tretë studentët kryejnë katër javë klinikë "
-                      "juridike në gjykatë, prokurori ose zyrë avokatie, të "
-                      "vlerësuara me 4 kredite ECTS. Klinika dokumentohet me "
-                      "një ditar pune dhe një analizë rasti."),
+                ("h2", "Neni 3 — Simulimi i Kombeve të Bashkuara"),
+                ("p", "Në semestrin e pestë studentët marrin pjesë në një "
+                      "simulim dy-ditor të Asamblesë së Përgjithshme të OKB-së, "
+                      "ku përfaqësojnë një shtet të caktuar me short. Simulimi "
+                      "vlerësohet me 3 kredite ECTS dhe është kusht për "
+                      "diplomim."),
                 ("h2", "Neni 4 — Punimi i diplomës"),
-                ("p", "Punimi i diplomës në drejtësi ka 10 000 deri në 15 000 "
-                      "fjalë dhe citon legjislacionin dhe praktikën gjyqësore "
-                      "me fusnota. Tema regjistrohet deri më 15 prill."),
+                ("p", "Punimi i diplomës ka 9 000 deri në 12 000 fjalë. Tema "
+                      "regjistrohet deri më 1 prill të vitit të tretë, me "
+                      "miratimin e mentorit, dhe mbrohet para një komisioni "
+                      "prej tre anëtarësh."),
             ],
         ],
     },
     {
-        "file_name": "syllabus-ju201-e-drejta-penale.pdf",
-        "title": "Syllabus: JU201 E Drejta Penale",
+        "file_name": "syllabus-sp201-marredheniet-nderkombetare.pdf",
+        "title": "Syllabus: SP201 Marrëdhëniet Ndërkombëtare",
         "document_type": "SYLLABUS",
-        "description": "Përmbajtja dhe vlerësimi i lëndës JU201.",
-        "academic_year": "2025/2026",
-        "course": "JU201",
+        "description": FICTIONAL + "Përmbajtja dhe vlerësimi i lëndës SP201.",
+        "academic_year": "2026/2027",
+        "course": "SP201",
         "pages": [
             [
-                ("h1", "JU201 — E Drejta Penale"),
+                ("h1", "SP201 — Marrëdhëniet Ndërkombëtare"),
                 ("h2", "Të dhënat e lëndës"),
-                ("p", "Kodi: JU201. Kredite: 6 ECTS. Semestri: 3. Ligjëruese: "
+                ("p", "Kodi: SP201. Kredite: 6 ECTS. Semestri: 3. Ligjëruese: "
                       "Prof. Dr. Vjosa Gashi, zyra D-201."),
                 ("h2", "Përmbajtja"),
-                ("p", "Javët 1-4: parimet e së drejtës penale dhe ligji penal "
-                      "në kohë e hapësirë. Javët 5-9: vepra penale, elementet "
-                      "e saj dhe fajësia. Javët 10-12: tentativa, "
-                      "bashkëpunimi dhe shkaqet që përjashtojnë "
-                      "përgjegjësinë. Javët 13-15: dënimet dhe masat "
-                      "alternative."),
+                ("p", "Javët 1-3: sistemi ndërkombëtar dhe aktorët e tij. "
+                      "Javët 4-7: realizmi, liberalizmi dhe konstruktivizmi. "
+                      "Javët 8-11: organizatat ndërkombëtare dhe e drejta "
+                      "ndërkombëtare. Javët 12-15: globalizimi, ekonomia "
+                      "politike ndërkombëtare dhe sfidat e reja."),
                 ("h2", "Vlerësimi"),
-                ("p", "Provimi me shkrim 60 për qind, provimi me gojë 30 për "
-                      "qind, analiza e një vendimi gjyqësor 10 për qind. "
-                      "Literatura bazë: Kodi Penal i Republikës së Kosovës."),
+                ("p", "Provimi përfundimtar 50 për qind, eseu seminarik 25 për "
+                      "qind, prezantimi i një krize ndërkombëtare 15 për qind, "
+                      "pjesëmarrja 10 për qind. Literatura: Baylis, Smith dhe "
+                      "Owens, The Globalization of World Politics."),
+            ],
+        ],
+    },
+    {
+        "file_name": "rregullorja-fakulteti-media-komunikim.pdf",
+        "title": "Rregullorja e Fakultetit Media dhe Komunikim",
+        "document_type": "REGULATION",
+        "description": FICTIONAL + "Studiot, praktika në redaksi, etika dhe portofoli.",
+        "academic_year": "2026/2027",
+        "faculty": "Media dhe Komunikim",
+        "pages": [
+            [
+                ("h1", "Rregullorja e Fakultetit Media dhe Komunikim"),
+                ("h2", "Neni 1 — Studiot e radios dhe televizionit"),
+                ("p", "Studiot rezervohen përmes zyrës teknike të paktën dy "
+                      "ditë më parë, për blloqe deri në tri orë. Pajisjet e "
+                      "xhirimit merren me nënshkrim dhe kthehen brenda 48 "
+                      "orësh; dëmtimi i pakujdesshëm paguhet nga studenti."),
+                ("h2", "Neni 2 — Praktika në redaksi"),
+                ("p", "Në semestrin e pestë studentët kryejnë praktikë prej "
+                      "katër javësh në një redaksi, agjenci komunikimi ose "
+                      "institucion publik. Praktika vlen 4 kredite ECTS dhe "
+                      "dokumentohet me tri punime të publikuara."),
+            ],
+            [
+                ("h2", "Neni 3 — Etika"),
+                ("p", "Përdorimi i burimeve anonime në punimet e studentëve "
+                      "kërkon miratimin paraprak të mentorit. Fotografitë e "
+                      "personave të identifikueshëm publikohen vetëm me "
+                      "pëlqimin e tyre të shkruar."),
+                ("h2", "Neni 4 — Portofoli dhe diploma"),
+                ("p", "Para mbrojtjes së diplomës, studenti dorëzon portofolin "
+                      "me së paku dhjetë punime, nga të cilat të paktën tri të "
+                      "publikuara. Tema e diplomës regjistrohet deri më 15 "
+                      "mars të vitit të tretë."),
+            ],
+        ],
+    },
+    {
+        "file_name": "syllabus-mk201-komunikimi-digjital.pdf",
+        "title": "Syllabus: MK201 Komunikimi Digjital dhe Mediat Sociale",
+        "document_type": "SYLLABUS",
+        "description": FICTIONAL + "Përmbajtja dhe vlerësimi i lëndës MK201.",
+        "academic_year": "2026/2027",
+        "course": "MK201",
+        "pages": [
+            [
+                ("h1", "MK201 — Komunikimi Digjital dhe Mediat Sociale"),
+                ("h2", "Të dhënat e lëndës"),
+                ("p", "Kodi: MK201. Kredite: 6 ECTS. Semestri: 3. Ligjëruese: "
+                      "Doc. Dr. Dafina Hasani, zyra F-08."),
+                ("h2", "Përmbajtja"),
+                ("p", "Javët 1-4: platformat sociale dhe ekonomia e "
+                      "vëmendjes. Javët 5-8: algoritmet e renditjes dhe "
+                      "krijimi i përmbajtjes. Javët 9-12: analitika e "
+                      "angazhimit dhe fushatat digjitale. Javët 13-15: "
+                      "dezinformimi dhe verifikimi i fakteve."),
+                ("h2", "Vlerësimi"),
+                ("p", "Fushata digjitale në grup 40 për qind, provimi "
+                      "përfundimtar 40 për qind, raporti analitik individual "
+                      "20 për qind."),
             ],
         ],
     },
@@ -263,7 +368,7 @@ FACULTY_DOCUMENTS: list[dict] = [
         "file_name": "rregullorja-fakulteti-arkitektures.pdf",
         "title": "Rregullorja e Fakultetit të Arkitekturës",
         "document_type": "REGULATION",
-        "description": "Studiot, portofoli dhe laboratori i maketeve.",
+        "description": FICTIONAL + "Studiot, portofoli dhe laboratori i maketeve.",
         "academic_year": "2025/2026",
         "faculty": "Fakulteti i Arkitekturës dhe Planifikimit Hapësinor",
         "pages": [
@@ -297,7 +402,7 @@ FACULTY_DOCUMENTS: list[dict] = [
         "file_name": "syllabus-ar201-studio-projektimi.pdf",
         "title": "Syllabus: AR201 Studio Projektimi I",
         "document_type": "SYLLABUS",
-        "description": "Përmbajtja dhe vlerësimi i lëndës AR201.",
+        "description": FICTIONAL + "Përmbajtja dhe vlerësimi i lëndës AR201.",
         "academic_year": "2025/2026",
         "course": "AR201",
         "pages": [

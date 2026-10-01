@@ -559,8 +559,10 @@ def sync_semester_enrollments(db: Session, program: Program) -> int:
         ).all():
             course = db.get(Course, enrollment.course_id)
 
+            # Lëndët e përfunduara janë historik: mbeten.
             if (
-                course.program_id == program.id
+                enrollment.status == "ACTIVE"
+                and course.program_id == program.id
                 and course.semester != profile.semester
             ):
                 db.delete(enrollment)
@@ -1013,6 +1015,19 @@ def seed_extra_faculties(db: Session, cs_program: Program) -> dict:
             db.add(program)
             db.flush()
 
+        faculty = db.scalar(
+            select(Faculty).where(Faculty.name == spec["faculty"])
+        )
+
+        # Plotësohet vetëm ajo që mungon: programi pa fakultet lidhet me
+        # fakultetin me të njëjtin emër, dhe përshkrimi bosh mbushet.
+        if faculty is not None:
+            if program.faculty_id is None:
+                program.faculty_id = faculty.id
+
+            if not faculty.description:
+                faculty.description = spec["description"]
+
         data = spec["professor"]
         professor = db.scalar(
             select(Professor).where(Professor.email == data["email"])
@@ -1032,6 +1047,9 @@ def seed_extra_faculties(db: Session, cs_program: Program) -> dict:
             )
             db.add(professor)
             db.flush()
+
+        if professor.faculty_id is None:
+            professor.faculty_id = program.faculty_id
 
         for course_data in spec["courses"]:
             course = get_or_create_course(
