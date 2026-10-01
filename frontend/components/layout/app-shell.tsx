@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3,
+  BellRing,
   BookOpen,
   CalendarDays,
   FileText,
@@ -60,6 +61,12 @@ const NAV_ITEMS: NavItem[] = [
     href: "/exams",
     label: "Provimet",
     icon: GraduationCap,
+    roles: ["STUDENT"],
+  },
+  {
+    href: "/notices",
+    label: "Afate dhe njoftime",
+    icon: BellRing,
     roles: ["STUDENT"],
   },
   {

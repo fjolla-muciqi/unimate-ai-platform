@@ -67,6 +67,7 @@ export interface FieldDef {
     | "number"
     | "select"
     | "time"
+    | "date"
     | "datetime"
     | "email"
     | "password";

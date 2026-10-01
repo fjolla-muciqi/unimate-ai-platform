@@ -77,7 +77,7 @@ export default function OnboardingPage() {
     try {
       await api.createMyProfile({
         program_id: Number(programId),
-        academic_year: Number(year),
+        study_year: Number(year),
         semester: Number(semester),
         preferred_language: language,
       });
@@ -129,7 +129,7 @@ export default function OnboardingPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="year">Viti akademik</Label>
+                <Label htmlFor="year">Viti i studimit</Label>
                 <Select value={year} onValueChange={changeYear}>
                   <SelectTrigger id="year">
                     <SelectValue />

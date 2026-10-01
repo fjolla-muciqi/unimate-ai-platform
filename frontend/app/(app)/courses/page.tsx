@@ -17,13 +17,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { api } from "@/lib/api";
-import type { Professor, Schedule, StudentCourse } from "@/lib/types";
+import type {
+  MyProfile,
+  Professor,
+  Schedule,
+  StudentCourse,
+} from "@/lib/types";
 import { DAY_LABELS, DAY_ORDER, formatTime } from "@/lib/utils";
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState<StudentCourse[] | null>(null);
   const [schedule, setSchedule] = useState<Schedule[]>([]);
   const [professors, setProfessors] = useState<Professor[]>([]);
+  const [profile, setProfile] = useState<MyProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,11 +37,13 @@ export default function CoursesPage() {
       api.myCourses(),
       api.mySchedule(),
       api.professors(),
+      api.myProfile(),
     ])
-      .then(([myCourses, mySchedule, allProfessors]) => {
+      .then(([myCourses, mySchedule, allProfessors, myProfile]) => {
         setCourses(myCourses);
         setSchedule(mySchedule);
         setProfessors(allProfessors);
+        setProfile(myProfile);
       })
       .catch((caught: unknown) =>
         setError(
@@ -67,7 +75,11 @@ export default function CoursesPage() {
     <div>
       <PageHeader
         title="Lëndët e mia"
-        description={`${courses.length} lëndë aktive · ${totalEcts} ECTS gjithsej`}
+        description={`${courses.length} lëndë aktive · ${totalEcts} ECTS gjithsej ${
+          profile && !profile.ects_is_official
+            ? " (shpërndarje demonstrative, jo zyrtare)"
+            : ""
+        }`}
       />
 
       {courses.length === 0 ? (

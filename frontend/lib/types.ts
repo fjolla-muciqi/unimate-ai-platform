@@ -18,9 +18,17 @@ export interface MyProfile {
   email: string;
   student_number: string;
   program_name: string | null;
-  academic_year: number;
+  study_year: number;
   semester: number;
   preferred_language: "sq" | "en";
+  // Katër koncepte të ndara: viti i studimit (1-3), semestri i
+  // kurrikulës (1-6), viti akademik ("2026/2027") dhe periudha.
+  faculty_name: string | null;
+  degree_level: string | null;
+  academic_year: string | null;
+  period_label: string | null;
+  // false: ECTS-të e lëndëve janë demonstrative, jo zyrtare.
+  ects_is_official: boolean;
 }
 
 export interface Source {
@@ -135,7 +143,7 @@ export interface AdminStudentRow {
   student_number: string | null;
   program_id: number | null;
   program_name: string | null;
-  academic_year: number | null;
+  study_year: number | null;
   semester: number | null;
   course_count: number;
 }
@@ -151,6 +159,7 @@ export interface AdminStudentCourse {
   group_name: string | null;
   teacher_name: string | null;
   status: string;
+  period_label: string | null;
 }
 
 export interface AdminStudentDetail extends AdminStudentRow {
@@ -236,9 +245,20 @@ export interface Program {
   degree_level: string;
   specialization: string | null;
   total_ects: number;
+  ects_is_official: boolean;
   duration_years: number;
   description: string | null;
   faculty_id: number | null;
+}
+
+export interface AcademicPeriod {
+  id: number;
+  academic_year: string;
+  term: "WINTER" | "SUMMER";
+  start_date: string;
+  end_date: string;
+  is_current: boolean;
+  label: string;
 }
 
 export interface Professor {
@@ -285,8 +305,16 @@ export interface Dashboard {
   full_name: string;
   student_number: string;
   program_name: string;
-  academic_year: number;
+  study_year: number;
   semester: number;
+  // Katër koncepte të ndara: viti i studimit (1-3), semestri i
+  // kurrikulës (1-6), viti akademik ("2026/2027") dhe periudha.
+  faculty_name: string | null;
+  degree_level: string | null;
+  academic_year: string | null;
+  period_label: string | null;
+  // false: ECTS-të e lëndëve janë demonstrative, jo zyrtare.
+  ects_is_official: boolean;
   active_courses: number;
   today: string;
   today_schedule: DashboardSlot[];
@@ -375,7 +403,7 @@ export interface ProfessorStudent {
   full_name: string;
   email: string;
   student_number: string;
-  academic_year: number;
+  study_year: number;
   course_code: string;
   course_name: string;
   group_name: string | null;

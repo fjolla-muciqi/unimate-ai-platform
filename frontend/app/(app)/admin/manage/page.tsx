@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { admin, api } from "@/lib/api";
 import type {
+  AcademicPeriod,
   Course,
   CourseGroup,
   Deadline,
@@ -50,6 +51,21 @@ const SEVERITIES = [
   { value: "INFO", label: "Informacion" },
   { value: "WARNING", label: "Paralajmërim" },
   { value: "URGENT", label: "Urgjent" },
+];
+
+const ECTS_STATUS = [
+  { value: "false", label: "Demonstrative" },
+  { value: "true", label: "Zyrtare" },
+];
+
+const TERMS = [
+  { value: "WINTER", label: "Dimërore (semestrat tek)" },
+  { value: "SUMMER", label: "Verore (semestrat çift)" },
+];
+
+const CURRENT_OPTIONS = [
+  { value: "false", label: "Jo" },
+  { value: "true", label: "Po, periudha aktuale" },
 ];
 
 const ACTIVE_OPTIONS = [
@@ -104,6 +120,9 @@ const byName = (a: { name: string }, b: { name: string }) =>
 const byLastName = (a: Professor, b: Professor) =>
   a.last_name.localeCompare(b.last_name) ||
   a.first_name.localeCompare(b.first_name);
+
+const byPeriod = (a: AcademicPeriod, b: AcademicPeriod) =>
+  b.start_date.localeCompare(a.start_date);
 
 const byGroup = (a: CourseGroup, b: CourseGroup) =>
   (a.course_code ?? "").localeCompare(b.course_code ?? "") ||
@@ -260,8 +279,17 @@ export default function ManagePage() {
     { name: "degree_level", label: "Niveli", type: "select", required: true, options: DEGREE_LEVELS },
     { name: "specialization", label: "Drejtimi", type: "text" },
     { name: "total_ects", label: "ECTS gjithsej", type: "number", required: true },
+    { name: "ects_is_official", label: "ECTS-të e lëndëve", type: "select", options: ECTS_STATUS },
     { name: "duration_years", label: "Kohëzgjatja (vite)", type: "number", required: true },
     { name: "description", label: "Përshkrimi", type: "textarea", wide: true },
+  ];
+
+  const periodFields: FieldDef[] = [
+    { name: "academic_year", label: "Viti akademik", type: "text", required: true, placeholder: "2026/2027" },
+    { name: "term", label: "Periudha", type: "select", required: true, options: TERMS },
+    { name: "start_date", label: "Fillimi", type: "date", required: true },
+    { name: "end_date", label: "Mbarimi", type: "date", required: true },
+    { name: "is_current", label: "Aktuale", type: "select", options: CURRENT_OPTIONS },
   ];
 
   const professorFields: FieldDef[] = [
@@ -354,6 +382,7 @@ export default function ManagePage() {
         <TabsList className="h-auto flex-wrap justify-start">
           <TabsTrigger value="faculties">Fakultetet</TabsTrigger>
           <TabsTrigger value="programs">Programet</TabsTrigger>
+          <TabsTrigger value="periods">Periudhat</TabsTrigger>
           <TabsTrigger value="professors">Profesorët</TabsTrigger>
           <TabsTrigger value="courses">Lëndët</TabsTrigger>
           <TabsTrigger value="groups">Grupet</TabsTrigger>
@@ -411,6 +440,7 @@ export default function ManagePage() {
               degree_level: "BACHELOR",
               specialization: "",
               total_ects: "180",
+              ects_is_official: "false",
               duration_years: "3",
               description: "",
             }}
@@ -420,6 +450,7 @@ export default function ManagePage() {
               degree_level: program.degree_level,
               specialization: program.specialization ?? "",
               total_ects: String(program.total_ects),
+              ects_is_official: String(program.ects_is_official),
               duration_years: String(program.duration_years),
               description: program.description ?? "",
             })}
@@ -429,6 +460,7 @@ export default function ManagePage() {
               degree_level: values.degree_level,
               specialization: optionalText(values.specialization),
               total_ects: Number(values.total_ects),
+              ects_is_official: values.ects_is_official === "true",
               duration_years: Number(values.duration_years),
               description: optionalText(values.description),
             })}
@@ -436,12 +468,74 @@ export default function ManagePage() {
               { header: "Programi", cell: (program) => <span className="font-medium">{program.name}</span> },
               { header: "Fakulteti", cell: (program) => facultyName(program.faculty_id) },
               { header: "Niveli", cell: (program) => labelOf(DEGREE_LEVELS, program.degree_level) },
-              { header: "ECTS", cell: (program) => program.total_ects, className: "tabular-nums" },
+              {
+                header: "ECTS",
+                cell: (program) => (
+                  <span className="tabular-nums">
+                    {program.total_ects}{" "}
+                    {program.ects_is_official ? null : (
+                      <Badge variant="outline">demonstrative</Badge>
+                    )}
+                  </span>
+                ),
+              },
+              {
+                header: "Semestra",
+                cell: (program) => program.duration_years * 2,
+                className: "tabular-nums",
+              },
               {
                 header: "Lëndë",
                 cell: (program) =>
                   (courses ?? []).filter((course) => course.program_id === program.id).length,
                 className: "tabular-nums",
+              },
+            ]}
+          />
+        </TabsContent>
+
+        <TabsContent value="periods">
+          <ResourceManager<AcademicPeriod>
+            title="Periudhat akademike"
+            description="Viti akademik (p.sh. 2026/2027) ndahet në periudhën dimërore, ku mbahen semestrat tek, dhe atë verore, ku mbahen semestrat çift. Regjistrimet e reja marrin periudhën e vitit akademik aktual që i përgjigjet semestrit të lëndës."
+            singular="periudhë"
+            resource={admin.periods}
+            fields={periodFields}
+            sort={byPeriod}
+            deleteWarning="Regjistrimet mbeten, por pa periudhë."
+            emptyForm={{
+              academic_year: "",
+              term: "WINTER",
+              start_date: "",
+              end_date: "",
+              is_current: "false",
+            }}
+            toForm={(period) => ({
+              academic_year: period.academic_year,
+              term: period.term,
+              start_date: period.start_date,
+              end_date: period.end_date,
+              is_current: String(period.is_current),
+            })}
+            toPayload={(values) => ({
+              academic_year: values.academic_year.trim(),
+              term: values.term,
+              start_date: values.start_date,
+              end_date: values.end_date,
+              is_current: values.is_current === "true",
+            })}
+            columns={[
+              { header: "Viti akademik", cell: (period) => <span className="font-medium">{period.academic_year}</span> },
+              { header: "Periudha", cell: (period) => labelOf(TERMS, period.term) },
+              {
+                header: "Kohëzgjatja",
+                cell: (period) => `${period.start_date} – ${period.end_date}`,
+                className: "tabular-nums",
+              },
+              {
+                header: "Statusi",
+                cell: (period) =>
+                  period.is_current ? <Badge variant="success">Aktuale</Badge> : null,
               },
             ]}
           />
@@ -517,7 +611,7 @@ export default function ManagePage() {
         <TabsContent value="courses">
           <ResourceManager<Course>
             title="Lëndët"
-            description="Katalogu i lëndëve me ECTS, profesorin dhe syllabus-in."
+            description="Katalogu i lëndëve me ECTS, profesorin dhe syllabus-in. Semestri është ai i kurrikulës (1-6): viti i studimit N përmban semestrat 2N-1 dhe 2N. ECTS-të janë demonstrative kur programi nuk i ka shënuar si zyrtare."
             singular="lëndë"
             resource={admin.courses}
             fields={courseFields}
@@ -559,7 +653,11 @@ export default function ManagePage() {
               { header: "Emri", cell: (course) => course.name },
               { header: "Programi", cell: (course) => programLabel(course.program_id) },
               { header: "ECTS", cell: (course) => course.ects, className: "tabular-nums" },
-              { header: "Sem.", cell: (course) => course.semester, className: "tabular-nums" },
+              {
+                header: "Viti / Sem.",
+                cell: (course) => `${Math.ceil(course.semester / 2)} / ${course.semester}`,
+                className: "tabular-nums",
+              },
               { header: "Profesori", cell: (course) => professorName(course.professor_id) },
             ]}
           />

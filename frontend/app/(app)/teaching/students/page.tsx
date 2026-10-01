@@ -146,7 +146,7 @@ function StudentsView() {
                       </TableCell>
 
                       <TableCell className="tabular-nums">
-                        {student.academic_year}
+                        {student.study_year}
                       </TableCell>
 
                       <TableCell className="text-muted-foreground">

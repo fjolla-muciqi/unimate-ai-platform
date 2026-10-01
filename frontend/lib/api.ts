@@ -1,4 +1,5 @@
 import type {
+  AcademicPeriod,
   AdminOverview,
   AdminStudentDetail,
   AdminStudentRow,
@@ -153,6 +154,7 @@ export const admin = {
   programs: resource<Program>("/api/programs"),
   faculties: resource<Faculty>("/api/faculties"),
   courseGroups: resource<CourseGroup>("/api/course-groups"),
+  periods: resource<AcademicPeriod>("/api/academic-periods"),
   professors: resource<Professor>("/api/professors"),
 
   students(
@@ -282,7 +284,7 @@ export const api = {
 
   createMyProfile(payload: {
     program_id: number;
-    academic_year: number;
+    study_year: number;
     semester: number;
     preferred_language: MyProfile["preferred_language"];
   }): Promise<MyProfile> {

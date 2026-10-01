@@ -78,9 +78,12 @@ function AcademicProfileCard() {
 
   const rows: [string, string | number][] = [
     ["Numri i studentit", profile.student_number],
+    ["Fakulteti", profile.faculty_name ?? "—"],
     ["Programi", profile.program_name ?? "—"],
-    ["Viti akademik", profile.academic_year],
-    ["Semestri", profile.semester],
+    ["Viti i studimit", profile.study_year],
+    ["Semestri i kurrikulës", profile.semester],
+    ["Viti akademik", profile.academic_year ?? "—"],
+    ["Periudha", profile.period_label?.split(", ")[1] ?? "—"],
   ];
 
   return (
@@ -90,6 +93,9 @@ function AcademicProfileCard() {
         <CardDescription>
           Programin, vitin dhe semestrin i ndryshon administrata. Asistenti
           i përdor këto të dhëna për t&apos;i personalizuar përgjigjet.
+          {profile.ects_is_official
+            ? null
+            : " ECTS-të e lëndëve janë demonstrative, jo zyrtare."}
         </CardDescription>
       </CardHeader>
 

@@ -172,8 +172,8 @@ export default function StudentsPage() {
                     </TableCell>
 
                     <TableCell className="tabular-nums">
-                      {student.academic_year
-                        ? `${student.academic_year} / ${student.semester}`
+                      {student.study_year
+                        ? `${student.study_year} / ${student.semester}`
                         : "—"}
                     </TableCell>
 

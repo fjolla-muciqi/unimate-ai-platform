@@ -17,6 +17,34 @@ test("studenti kyçet dhe sheh panelin e vet", async ({ page }) => {
   await expect(page.getByText("Mirë se erdhe, Arta")).toBeVisible();
 });
 
+test("paneli tregon strukturën akademike", async ({ page }) => {
+  await login(page, STUDENT.email, STUDENT.password);
+  await expect(page).toHaveURL(/\/dashboard/);
+
+  const structure = page.getByRole("region", { name: "Struktura akademike" });
+
+  await expect(structure).toContainText("Viti 2");
+  await expect(structure).toContainText("Semestri 3");
+  await expect(structure).toContainText("2026/2027");
+  await expect(structure).toContainText("periudha dimërore");
+  await expect(structure).toContainText("demonstrative");
+});
+
+test("kutia e afateve hap afatet dhe njoftimet", async ({ page }) => {
+  await login(page, STUDENT.email, STUDENT.password);
+  await expect(page).toHaveURL(/\/dashboard/);
+
+  await page.getByRole("link", { name: /Afate & njoftime/ }).click();
+
+  await expect(page).toHaveURL(/\/notices/);
+  await expect(
+    page.getByRole("heading", { name: "Afate dhe njoftime" }),
+  ).toBeVisible();
+  await expect(page.getByText(/^Afatet \(\d+\)$/)).toBeVisible();
+  await expect(page.getByText(/^Njoftimet \(\d+\)$/)).toBeVisible();
+  await expect(page.getByText("Pagesa e këstit të dytë")).toBeVisible();
+});
+
 test("fjalëkalimi i gabuar nuk hap sesion", async ({ page }) => {
   await login(page, STUDENT.email, "gabim-gabim");
 
@@ -90,7 +118,9 @@ test("studenti i ri plotëson profilin dhe merr lëndët", async ({ page }) => {
 
   // Programi i seed-it, jo ndonjë program tjetër që mund të ekzistojë.
   await page.getByLabel("Programi i studimit").click();
-  await page.getByRole("option", { name: "Shkenca Kompjuterike" }).click();
+  await page
+    .getByRole("option", { name: "Shkenca Kompjuterike dhe Inxhinieri" })
+    .click();
 
   await page.getByRole("button", { name: "Ruaj dhe vazhdo" }).click();
 
@@ -98,7 +128,7 @@ test("studenti i ri plotëson profilin dhe merr lëndët", async ({ page }) => {
   await expect(page.getByText("Mirë se erdhe, Provë")).toBeVisible();
 
   await page.goto("/courses");
-  await expect(page.getByText("CS101")).toBeVisible();
+  await expect(page.getByText("SKI-101")).toBeVisible();
 });
 
 test("dokumentet grupohen sipas fakultetit dhe lëndës", async ({ page }) => {
@@ -108,17 +138,19 @@ test("dokumentet grupohen sipas fakultetit dhe lëndës", async ({ page }) => {
   await page.goto("/documents");
 
   // Dokument fakulteti dhe dokument lënde nga të dhënat demo.
-  await expect(page.getByText("Rregullorja e Fakultetit Juridik")).toBeVisible();
+  await expect(page.getByText("Rregullorja e Studimeve Bachelor")).toBeVisible();
   await expect(
-    page.getByText("Semestri 3 · JU201 — E Drejta Penale"),
+    page.getByText("Semestri 3 · SKI-305 — Hyrje në Algoritme"),
   ).toBeVisible();
 
   // Filtri i fakultetit fsheh dokumentet e fakulteteve të tjera.
   await page.getByLabel("Fakulteti", { exact: true }).click();
-  await page.getByRole("option", { name: "Fakulteti Juridik" }).click();
+  await page
+    .getByRole("option", { name: "Shkenca Kompjuterike dhe Inxhinieri" })
+    .click();
 
-  await expect(page.getByText("Rregullorja e Fakultetit Juridik")).toBeVisible();
-  await expect(page.getByText("Syllabus: EM202 Marketing")).toHaveCount(0);
+  await expect(page.getByText("Rregullorja e Studimeve Bachelor")).toBeVisible();
+  await expect(page.getByText("Syllabus: AR201 Studio Projektimi I")).toHaveCount(0);
 });
 
 test("administratori ndryshon grupin e një studenti", async ({ page }) => {
@@ -130,7 +162,7 @@ test("administratori ndryshon grupin e një studenti", async ({ page }) => {
   await page.getByRole("button", { name: "Kërko" }).click();
   await page.getByRole("link", { name: "Arta Krasniqi" }).click();
 
-  const row = page.getByRole("row", { name: /CS201/ });
+  const row = page.getByRole("row", { name: /SKI-305/ });
   await expect(row).toContainText("Arben Hoxha");
 
   const changeTo = async (group: string, teacher: string) => {

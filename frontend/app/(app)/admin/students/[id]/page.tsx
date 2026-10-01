@@ -155,7 +155,11 @@ export default function StudentDetailPage() {
     return error ? <ErrorState message={error} /> : <LoadingState />;
   }
 
-  const totalEcts = student.courses.reduce((sum, course) => sum + course.ects, 0);
+  const activeCourses = student.courses.filter((course) => course.status === "ACTIVE");
+  const totalEcts = activeCourses.reduce((sum, course) => sum + course.ects, 0);
+  const earnedEcts = student.courses
+    .filter((course) => course.status === "COMPLETED")
+    .reduce((sum, course) => sum + course.ects, 0);
 
   return (
     <div className="space-y-6">
@@ -193,12 +197,13 @@ export default function StudentDetailPage() {
       ) : (
         <>
           <Card>
-            <CardContent className="grid gap-4 p-6 sm:grid-cols-4">
+            <CardContent className="grid gap-4 p-6 sm:grid-cols-5">
               {[
                 ["Numri i studentit", student.student_number],
                 ["Programi", student.program_name],
-                ["Viti / Semestri", `${student.academic_year} / ${student.semester}`],
+                ["Viti i studimit / Semestri", `${student.study_year} / ${student.semester}`],
                 ["Lëndë aktive", `${student.course_count} (${totalEcts} ECTS)`],
+                ["ECTS të fituara", String(earnedEcts)],
               ].map(([label, value]) => (
                 <div key={label}>
                   <p className="text-sm text-muted-foreground">{label}</p>
@@ -228,6 +233,7 @@ export default function StudentDetailPage() {
                     <TableRow>
                       <TableHead>Sem.</TableHead>
                       <TableHead>Lënda</TableHead>
+                      <TableHead>Periudha</TableHead>
                       <TableHead>ECTS</TableHead>
                       <TableHead>Grupi</TableHead>
                       <TableHead>Profesori</TableHead>
@@ -247,6 +253,14 @@ export default function StudentDetailPage() {
                           <TableCell>
                             <span className="font-medium">{course.code}</span>{" "}
                             {course.name}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {course.period_label ?? "—"}
+                            {course.status === "COMPLETED" ? (
+                              <Badge variant="success" className="ml-2">
+                                E përfunduar
+                              </Badge>
+                            ) : null}
                           </TableCell>
                           <TableCell className="tabular-nums">{course.ects}</TableCell>
 

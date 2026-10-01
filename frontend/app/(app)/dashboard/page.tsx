@@ -32,14 +32,22 @@ function StatCard({
   value,
   hint,
   icon: Icon,
+  href,
 }: {
   label: string;
   value: string | number;
   hint?: string;
   icon: typeof BookOpen;
+  href?: string;
 }) {
-  return (
-    <Card>
+  const card = (
+    <Card
+      className={
+        href
+          ? "h-full transition-colors hover:border-primary/50 hover:bg-muted/40"
+          : undefined
+      }
+    >
       <CardContent className="flex items-start justify-between gap-4 p-5">
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground">{label}</p>
@@ -53,6 +61,62 @@ function StatCard({
         <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <Icon className="size-5" />
         </div>
+      </CardContent>
+    </Card>
+  );
+
+  if (!href) {
+    return card;
+  }
+
+  return (
+    <Link
+      href={href}
+      aria-label={`${label}: shiko të gjitha`}
+      className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      {card}
+    </Link>
+  );
+}
+
+function AcademicStructure({ data }: { data: Dashboard }) {
+  const rows: [string, string][] = [
+    ["Fakulteti", data.faculty_name ?? "—"],
+    [
+      "Programi",
+      data.degree_level
+        ? `${data.program_name} (${data.degree_level === "BACHELOR" ? "Bachelor" : data.degree_level})`
+        : data.program_name,
+    ],
+    ["Viti i studimit", `Viti ${data.study_year}`],
+    ["Semestri i kurrikulës", `Semestri ${data.semester}`],
+    ["Viti akademik", data.academic_year ?? "—"],
+    ["Periudha", data.period_label?.split(", ")[1] ?? "—"],
+  ];
+
+  return (
+    <Card role="region" aria-label="Struktura akademike">
+      <CardHeader className="pb-3">
+        <CardTitle>Struktura akademike</CardTitle>
+        <CardDescription>
+          Viti i studimit dhe semestri i kurrikulës janë të programit; viti
+          akademik dhe periudha janë kalendarike.
+          {data.ects_is_official
+            ? null
+            : " ECTS-të e lëndëve janë demonstrative, jo zyrtare."}
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent>
+        <dl className="grid gap-4 sm:grid-cols-3 xl:grid-cols-6">
+          {rows.map(([label, value]) => (
+            <div key={label}>
+              <dt className="text-xs text-muted-foreground">{label}</dt>
+              <dd className="text-sm font-medium">{value}</dd>
+            </div>
+          ))}
+        </dl>
       </CardContent>
     </Card>
   );
@@ -89,7 +153,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title={`Mirë se erdhe, ${firstName}`}
-        description={`${data.program_name} · Viti ${data.academic_year}, semestri ${data.semester} · Nr. ${data.student_number}`}
+        description={`${data.program_name} · Viti i studimit ${data.study_year}, semestri ${data.semester}${data.academic_year ? ` · ${data.academic_year}` : ""} · Nr. ${data.student_number}`}
       >
         <Button asChild>
           <Link href="/chat">
@@ -99,12 +163,15 @@ export default function DashboardPage() {
         </Button>
       </PageHeader>
 
+      <AcademicStructure data={data} />
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Lëndë aktive"
           value={data.active_courses}
           hint={`${data.progress.in_progress_ects} ECTS këtë semestër`}
           icon={BookOpen}
+          href="/courses"
         />
         <StatCard
           label="Provime të ardhshme"
@@ -115,18 +182,21 @@ export default function DashboardPage() {
               : "Asnjë provim i planifikuar"
           }
           icon={GraduationCap}
+          href="/exams"
         />
         <StatCard
           label="Afate & njoftime"
           value={data.upcoming_deadlines + data.active_notifications}
           hint={`${data.upcoming_deadlines} afate, ${data.active_notifications} njoftime`}
           icon={BellRing}
+          href="/notices"
         />
         <StatCard
           label="Dokumente të indeksuara"
           value={data.available_documents}
           hint="Gati për pyetje te asistenti"
           icon={FileText}
+          href="/documents"
         />
       </div>
 
