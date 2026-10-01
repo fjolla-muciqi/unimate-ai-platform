@@ -5,16 +5,26 @@ Idempotent: mund të ekzekutohet disa herë pa krijuar dublikatë.
     python -m scripts.seed
 """
 
-from datetime import datetime, time, timedelta
+import hashlib
+import json
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.ai.rag.ingestion import ingest_document_in_background
 from app.core.config import settings
 from app.core.database import SessionLocal
+from app.core.periods import period_for_semester
 from app.core.security import hash_password
+from app.core.teaching import least_filled_group
+from app.models.academic_period import (
+    SUMMER,
+    WINTER,
+    AcademicPeriod,
+    term_for_semester,
+)
 from app.models.course import Course
 from app.models.course_group import CourseGroup
 from app.models.course_prerequisite import CoursePrerequisite
@@ -29,11 +39,18 @@ from app.models.program import Program
 from app.models.schedule import Schedule
 from app.models.student_profile import StudentProfile
 from app.models.user import User, UserRole
-from scripts.demo_faculties import (
-    CS_EXTRA_COURSES,
-    EXTRA_FACULTIES,
-    FACULTY_DOCUMENTS,
+from scripts.curriculum import (
+    CURRICULUM,
+    FACULTY_DESCRIPTION,
+    FACULTY_NAME,
+    LEGACY_CODES,
+    LEGACY_FACULTY_NAME,
+    LEGACY_PROGRAM_NAME,
+    PREREQUISITES,
+    PROGRAM,
+    PROGRAM_NAME,
 )
+from scripts.demo_faculties import EXTRA_FACULTIES, FACULTY_DOCUMENTS
 from scripts.demo_documents import DEMO_DOCUMENTS, write_pdf
 
 
@@ -45,9 +62,6 @@ STUDENT_PASSWORD = "Student123!"
 
 # Profesorët kyçen me emailin e tyre nga lista PROFESSORS më poshtë.
 PROFESSOR_PASSWORD = "Professor123!"
-
-PROGRAM_NAME = "Shkenca Kompjuterike"
-FACULTY_NAME = "Fakulteti i Inxhinierisë Kompjuterike"
 
 PROFESSORS = [
     {
@@ -68,33 +82,29 @@ PROFESSORS = [
     },
 ]
 
-# Kodi i lëndës -> mbiemri i profesorit që e ligjëron.
+# Kodi i lëndës -> mbiemri i profesorit koordinator. Profesorët e demos
+# janë fiktivë; lëndët e tjera i cakton administratori.
 COURSE_PROFESSORS = {
-    "CS201": "Hoxha",
-    "CS202": "Berisha",
-    "CS203": "Hoxha",
-    "CS301": "Berisha",
-}
-
-# Lënda -> parakushtet e saj.
-PREREQUISITES = {
-    "CS201": ["CS101", "CS102"],
-    "CS202": ["CS101"],
-    "CS203": ["CS101"],
-    "CS301": ["CS201"],
+    "SKI-301": "Hoxha",
+    "SKI-302": "Berisha",
+    "SKI-303": "Berisha",
+    "SKI-304": "Hoxha",
+    "SKI-305": "Hoxha",
+    "SKI-306": "Berisha",
+    "SKI-505": "Berisha",
 }
 
 SYLLABI = {
-    "CS201": """Java 1-2: Analiza e kompleksitetit, notacioni O i madh.
+    "SKI-305": """Java 1-2: Analiza e kompleksitetit, notacioni O i madh.
 Java 3-5: Lista, stack, queue, listat e lidhura.
 Java 6-8: Pemët binare, pemët e kërkimit, balancimi AVL.
 Java 9-11: Hash tabelat dhe trajtimi i përplasjeve.
 Java 12-14: Algoritmet e renditjes dhe kërkimit, programimi dinamik.""",
-    "CS202": """Java 1-3: Modeli relacional, algjebra relacionale.
+    "SKI-303": """Java 1-3: Modeli relacional, algjebra relacionale.
 Java 4-7: SQL — SELECT, JOIN, agregime, nënpyetje.
 Java 8-10: Normalizimi, format normale 1NF deri 3NF dhe BCNF.
 Java 11-14: Transaksionet, ACID, indekset dhe optimizimi.""",
-    "CS203": """Java 1-3: Klasat, objektet, enkapsulimi.
+    "SKI-301": """Java 1-3: Klasat, objektet, enkapsulimi.
 Java 4-7: Trashëgimia, polimorfizmi, klasat abstrakte.
 Java 8-11: Interfaces, kompozimi mbi trashëgiminë.
 Java 12-14: Modelet e dizajnit — Factory, Strategy, Observer.""",
@@ -119,85 +129,48 @@ NOTIFICATIONS = [
      "Regjistrimi i lëndëve mbyllet për dy javë. Mos e lini në fund."),
 ]
 
-COURSES = [
-    {
-        "code": "CS101",
-        "name": "Hyrje në Programim",
-        "ects": 6,
-        "semester": 1,
-        "description": (
-            "Bazat e programimit në Python: tipet e të dhënave, "
-            "kontrolli i rrjedhës, funksionet dhe strukturat bazë."
-        ),
-    },
-    {
-        "code": "CS102",
-        "name": "Matematikë Diskrete",
-        "ects": 6,
-        "semester": 1,
-        "description": (
-            "Logjika, bashkësitë, relacionet, kombinatorika dhe "
-            "hyrje në teorinë e grafeve."
-        ),
-    },
-    {
-        "code": "CS201",
-        "name": "Algoritme dhe Struktura të Dhënash",
-        "ects": 7,
-        "semester": 3,
-        "description": (
-            "Kompleksiteti algoritmik, listat, pemët, hash tabelat, "
-            "renditja dhe kërkimi."
-        ),
-    },
-    {
-        "code": "CS202",
-        "name": "Bazat e të Dhënave",
-        "ects": 6,
-        "semester": 3,
-        "description": (
-            "Modelimi relacional, SQL, normalizimi dhe transaksionet."
-        ),
-    },
-    {
-        "code": "CS203",
-        "name": "Programim i Orientuar në Objekte",
-        "ects": 6,
-        "semester": 3,
-        "description": (
-            "Klasat, trashëgimia, polimorfizmi dhe modelet e dizajnit."
-        ),
-    },
-    {
-        "code": "CS301",
-        "name": "Inteligjenca Artificiale",
-        "ects": 7,
-        "semester": 5,
-        "description": (
-            "Kërkimi, arsyetimi, mësimi i makinës dhe modelet gjuhësore."
-        ),
-    },
-]
-
+# Orari javor i semestrit 3, pa përplasje për studentin demo.
 SCHEDULES = [
-    ("CS201", "Monday", time(9, 0), time(10, 30), "A-201"),
-    ("CS201", "Wednesday", time(9, 0), time(10, 30), "A-201"),
-    ("CS202", "Monday", time(11, 0), time(12, 30), "B-104"),
-    ("CS202", "Thursday", time(14, 0), time(15, 30), "Lab-2"),
-    ("CS203", "Tuesday", time(10, 0), time(11, 30), "A-105"),
-    ("CS203", "Friday", time(12, 0), time(13, 30), "Lab-1"),
+    ("SKI-305", "Monday", time(9, 0), time(10, 30), "A-201"),
+    ("SKI-305", "Wednesday", time(9, 0), time(10, 30), "A-201"),
+    ("SKI-303", "Monday", time(11, 0), time(12, 30), "B-104"),
+    ("SKI-303", "Thursday", time(14, 0), time(15, 30), "Lab-2"),
+    ("SKI-301", "Tuesday", time(10, 0), time(11, 30), "A-105"),
+    ("SKI-301", "Friday", time(12, 0), time(13, 30), "Lab-1"),
+    ("SKI-302", "Tuesday", time(12, 0), time(13, 30), "A-210"),
+    ("SKI-302", "Wednesday", time(11, 0), time(12, 30), "A-210"),
+    ("SKI-304", "Wednesday", time(14, 0), time(15, 30), "Lab-3"),
+    ("SKI-304", "Friday", time(9, 0), time(10, 30), "Lab-3"),
+    ("SKI-306", "Tuesday", time(14, 0), time(15, 30), "Lab-2"),
+    ("SKI-306", "Friday", time(14, 0), time(15, 30), "Lab-2"),
 ]
 
 # Provimet vendosen relativisht ndaj datës së sotme, që të mbeten
 # gjithmonë "të ardhshme" pavarësisht kur ekzekutohet seed-i.
 EXAMS = [
-    ("CS201", "FINAL", 21, time(10, 0), "A-201"),
-    ("CS202", "MIDTERM", 10, time(9, 0), "B-104"),
-    ("CS203", "FINAL", 28, time(13, 0), "A-105"),
-    ("CS201", "MIDTERM", -35, time(10, 0), "A-201"),
+    ("SKI-305", "FINAL", 21, time(10, 0), "A-201"),
+    ("SKI-303", "MIDTERM", 10, time(9, 0), "B-104"),
+    ("SKI-301", "FINAL", 28, time(13, 0), "A-105"),
+    ("SKI-305", "MIDTERM", -35, time(10, 0), "A-201"),
+    ("SKI-302", "MIDTERM", 17, time(11, 0), "A-210"),
+    ("SKI-304", "MIDTERM", 24, time(9, 0), "Lab-3"),
+    ("SKI-306", "FINAL", 35, time(12, 0), "Lab-2"),
 ]
 
-ENROLLED_COURSE_CODES = ["CS201", "CS202", "CS203"]
+# Studentja demo është në vitin e dytë, semestri 3.
+DEMO_SEMESTER = 3
+ENROLLED_COURSE_CODES = [
+    code for code, _, _, semester, _ in CURRICULUM if semester == DEMO_SEMESTER
+]
+
+# Periudhat akademike: (viti akademik, periudha, fillimi, mbarimi).
+PERIODS = [
+    ("2025/2026", WINTER, date(2025, 10, 1), date(2026, 1, 31)),
+    ("2025/2026", SUMMER, date(2026, 2, 23), date(2026, 6, 30)),
+    ("2026/2027", WINTER, date(2026, 10, 1), date(2027, 1, 31)),
+    ("2026/2027", SUMMER, date(2027, 2, 22), date(2027, 6, 30)),
+]
+CURRENT_PERIOD = ("2026/2027", WINTER)
 
 # Kolegët e studentit demo. Fjalëkalimi është i njëjtë për të gjithë
 # sepse asnjëri nuk përdoret për t'u kyçur gjatë demos.
@@ -256,12 +229,22 @@ def get_or_create_faculty(db: Session) -> Faculty:
     if faculty:
         return faculty
 
+    # Baza e demos së mëparshme riemërtohet në vend, që dokumentet dhe
+    # profesorët e lidhur të mbeten.
+    faculty = db.scalar(
+        select(Faculty).where(Faculty.name == LEGACY_FACULTY_NAME)
+    )
+
+    if faculty:
+        faculty.name = FACULTY_NAME
+        faculty.description = FACULTY_DESCRIPTION
+        db.flush()
+
+        return faculty
+
     faculty = Faculty(
         name=FACULTY_NAME,
-        description=(
-            "Fakulteti që mbulon programet e shkencave kompjuterike "
-            "dhe inxhinierisë softuerike."
-        ),
+        description=FACULTY_DESCRIPTION,
     )
 
     db.add(faculty)
@@ -308,6 +291,9 @@ def seed_professors(
 
             professor.user_id = account.id
             db.flush()
+
+        if professor.faculty_id is None:
+            professor.faculty_id = faculty.id
 
         professors[professor.last_name] = professor
 
@@ -426,30 +412,188 @@ def get_or_create_program(db: Session, faculty: Faculty) -> Program:
         if program.faculty_id is None:
             program.faculty_id = faculty.id
 
+        # Fushat bosh (p.sh. programi i krijuar nga admini) plotësohen;
+        # ato që admini i ka shkruar nuk preken.
+        for field in ("description", "graduation_requirements"):
+            if not getattr(program, field):
+                setattr(program, field, PROGRAM[field])
+
         return program
 
-    program = Program(
-        name=PROGRAM_NAME,
-        faculty_id=faculty.id,
-        degree_level="BACHELOR",
-        specialization="Inxhinieri Softuerike",
-        total_ects=180,
-        duration_years=3,
-        description=(
-            "Program trevjeçar bachelor në shkenca kompjuterike me "
-            "fokus në inxhinieri softuerike dhe inteligjencë artificiale."
-        ),
-        graduation_requirements=(
-            "Për diplomim kërkohen 180 ECTS, përfundimi i të gjitha "
-            "lëndëve të detyrueshme, praktika profesionale prej 4 javësh "
-            "dhe mbrojtja e temës së diplomës."
-        ),
+    legacy = db.scalar(
+        select(Program).where(Program.name == LEGACY_PROGRAM_NAME)
     )
+
+    if legacy:
+        legacy.name = PROGRAM_NAME
+        legacy.faculty_id = faculty.id
+
+        for field, value in PROGRAM.items():
+            setattr(legacy, field, value)
+
+        db.flush()
+
+        return legacy
+
+    program = Program(name=PROGRAM_NAME, faculty_id=faculty.id, **PROGRAM)
 
     db.add(program)
     db.flush()
 
     return program
+
+
+def merge_legacy_program(db: Session, program: Program) -> bool:
+    """Bashkon programin e vjetër "Shkenca Kompjuterike" te programi i ri.
+
+    Ndodh kur admini e ka krijuar vetë programin e ri: studentët, lëndët,
+    afatet dhe njoftimet e të vjetrit kalojnë te i riu, dhe i vjetri
+    fshihet bosh.
+    """
+
+    legacy = db.scalar(
+        select(Program).where(
+            Program.name == LEGACY_PROGRAM_NAME,
+            Program.id != program.id,
+        )
+    )
+
+    if legacy is None:
+        return False
+
+    for model in (StudentProfile, Course, Deadline, Notification):
+        for row in db.scalars(
+            select(model).where(model.program_id == legacy.id)
+        ).all():
+            row.program_id = program.id
+
+    db.flush()
+    db.expire(legacy)
+    db.delete(legacy)
+    db.flush()
+
+    return True
+
+
+def migrate_legacy_curriculum(db: Session, program: Program) -> int:
+    """Kalon një bazë me lëndët CSxxx te kurrikula SKI-xxx, një herë.
+
+    Lëndët riemërtohen në vend: regjistrimet, grupet, materialet dhe
+    bisedat ekzistuese mbeten të lidhura. Parakushtet e vjetra fshihen
+    (rikrijohen nga kurrikula), dhe regjistrimet e studentëve në lëndë
+    të një semestri tjetër nga ai i tyre hiqen, sepse lëndët kanë
+    ndryshuar semestër.
+    """
+
+    legacy = db.scalars(
+        select(Course).where(Course.code.in_(LEGACY_CODES))
+    ).all()
+
+    if not legacy:
+        return 0
+
+    catalog = {entry[0]: entry for entry in CURRICULUM}
+
+    for course in legacy:
+        code, name, ects, semester, description = catalog[
+            LEGACY_CODES[course.code]
+        ]
+
+        if db.scalar(select(Course.id).where(Course.code == code)):
+            continue
+
+        # Titujt e materialeve javore fillojnë me kodin e lëndës.
+        for document in db.scalars(
+            select(Document).where(
+                Document.course_id == course.id,
+                Document.title.startswith(f"{course.code} · "),
+            )
+        ).all():
+            document.title = code + document.title[len(course.code):]
+
+        course.code = code
+        course.name = name
+        course.ects = ects
+        course.semester = semester
+        course.description = description
+        course.program_id = program.id
+        course.syllabus = None
+
+    db.flush()
+
+    program_courses = select(Course.id).where(Course.program_id == program.id)
+
+    db.execute(
+        delete(CoursePrerequisite).where(
+            CoursePrerequisite.course_id.in_(program_courses)
+        )
+    )
+
+    db.flush()
+
+    return len(legacy)
+
+
+def sync_semester_enrollments(db: Session, program: Program) -> int:
+    """Çdo student i programit ndjek lëndët e semestrit të tij.
+
+    Thirret vetëm pas kalimit te kurrikula e re, njësoj si regjistrimi
+    automatik i onboarding-ut; më vonë regjistrimet i menaxhon admini.
+    Lëndët e programit nga semestra të tjerë hiqen, sepse me kurrikulën
+    e re kanë ndryshuar semestër.
+    """
+
+    created = 0
+
+    profiles = db.scalars(
+        select(StudentProfile).where(StudentProfile.program_id == program.id)
+    ).all()
+
+    for profile in profiles:
+        enrolled = set()
+
+        for enrollment in db.scalars(
+            select(Enrollment).where(
+                Enrollment.student_profile_id == profile.id
+            )
+        ).all():
+            course = db.get(Course, enrollment.course_id)
+
+            if (
+                course.program_id == program.id
+                and course.semester != profile.semester
+            ):
+                db.delete(enrollment)
+            else:
+                enrolled.add(course.id)
+
+        db.flush()
+
+        courses = db.scalars(
+            select(Course).where(
+                Course.program_id == program.id,
+                Course.semester == profile.semester,
+            )
+        ).all()
+
+        for course in courses:
+            if course.id in enrolled:
+                continue
+
+            group = least_filled_group(course.id, db)
+
+            db.add(
+                Enrollment(
+                    student_profile_id=profile.id,
+                    course_id=course.id,
+                    group_id=group.id if group else None,
+                    status="ACTIVE",
+                )
+            )
+            db.flush()
+            created += 1
+
+    return created
 
 
 def seed_courses(
@@ -459,15 +603,25 @@ def seed_courses(
 ) -> dict[str, Course]:
     courses: dict[str, Course] = {}
 
-    for data in COURSES:
-        course = db.scalar(
-            select(Course).where(Course.code == data["code"])
-        )
+    for code, name, ects, semester, description in CURRICULUM:
+        course = db.scalar(select(Course).where(Course.code == code))
 
         if course is None:
-            course = Course(program_id=program.id, **data)
+            course = Course(
+                code=code,
+                name=name,
+                ects=ects,
+                semester=semester,
+                description=description,
+                program_id=program.id,
+            )
             db.add(course)
             db.flush()
+
+        # Emri dhe semestri ndjekin kurrikulën; ECTS-të jo, sepse janë
+        # demonstrative dhe administratori mund t'i ketë ndryshuar.
+        course.name = name
+        course.semester = semester
 
         # Syllabus-i dhe profesori mbushen edhe për lëndë ekzistuese,
         # që seed-i i vjetër të pasurohet pa u rikrijuar baza.
@@ -486,6 +640,141 @@ def seed_courses(
     db.flush()
 
     return courses
+
+
+def seed_periods(db: Session) -> int:
+    created = 0
+
+    for academic_year, term, start, end in PERIODS:
+        period = db.scalar(
+            select(AcademicPeriod).where(
+                AcademicPeriod.academic_year == academic_year,
+                AcademicPeriod.term == term,
+            )
+        )
+
+        if period is None:
+            db.add(
+                AcademicPeriod(
+                    academic_year=academic_year,
+                    term=term,
+                    start_date=start,
+                    end_date=end,
+                    is_current=False,
+                )
+            )
+            created += 1
+
+    db.flush()
+
+    # Periudhën aktuale e zgjedh administratori; seed-i e cakton vetëm
+    # kur nuk ka asnjë.
+    has_current = db.scalar(
+        select(AcademicPeriod.id).where(AcademicPeriod.is_current.is_(True))
+    )
+
+    if has_current is None:
+        academic_year, term = CURRENT_PERIOD
+        current = db.scalar(
+            select(AcademicPeriod).where(
+                AcademicPeriod.academic_year == academic_year,
+                AcademicPeriod.term == term,
+            )
+        )
+        current.is_current = True
+        db.flush()
+
+    return created
+
+
+# Viti akademik kur studentët e demos ndoqën vitin e parë.
+HISTORY_ACADEMIC_YEAR = "2025/2026"
+
+
+def seed_completed_history(db: Session, program: Program) -> int:
+    """Lëndët e vitit të parë, të përfunduara në 2025/2026.
+
+    Studentët e demos janë në vitin e dytë: semestrat 1 dhe 2 i kanë
+    kaluar, semestri 1 në periudhën dimërore dhe 2 në verore. Kështu
+    progresi tregon 60 ECTS dhe regjistrimet e vjetra kanë periudhën e
+    tyre, jo atë aktuale.
+    """
+
+    periods = {
+        period.term: period
+        for period in db.scalars(
+            select(AcademicPeriod).where(
+                AcademicPeriod.academic_year == HISTORY_ACADEMIC_YEAR
+            )
+        ).all()
+    }
+
+    courses = db.scalars(
+        select(Course).where(
+            Course.program_id == program.id,
+            Course.semester < DEMO_SEMESTER,
+        )
+    ).all()
+
+    profiles = db.scalars(
+        select(StudentProfile)
+        .join(User, User.id == StudentProfile.user_id)
+        .where(
+            StudentProfile.program_id == program.id,
+            StudentProfile.semester == DEMO_SEMESTER,
+            or_(
+                User.email == STUDENT_EMAIL,
+                User.email.like("%@student.unimate.edu"),
+            ),
+        )
+    ).all()
+
+    created = 0
+
+    for profile in profiles:
+        enrolled = set(
+            db.scalars(
+                select(Enrollment.course_id).where(
+                    Enrollment.student_profile_id == profile.id
+                )
+            ).all()
+        )
+
+        for course in courses:
+            if course.id in enrolled:
+                continue
+
+            period = periods.get(term_for_semester(course.semester))
+
+            db.add(
+                Enrollment(
+                    student_profile_id=profile.id,
+                    course_id=course.id,
+                    period_id=period.id if period else None,
+                    status="COMPLETED",
+                )
+            )
+            created += 1
+
+    db.flush()
+
+    return created
+
+
+def assign_enrollment_periods(db: Session) -> int:
+    """Regjistrimet pa periudhë marrin atë të semestrit të lëndës."""
+
+    enrollments = db.scalars(
+        select(Enrollment).where(Enrollment.period_id.is_(None))
+    ).all()
+
+    for enrollment in enrollments:
+        period = period_for_semester(enrollment.course.semester, db)
+        enrollment.period_id = period.id if period else None
+
+    db.flush()
+
+    return len(enrollments)
 
 
 def seed_schedules(db: Session, courses: dict[str, Course]) -> int:
@@ -580,8 +869,8 @@ def seed_student_profile(
         user_id=student.id,
         student_number="2024-CS-001",
         program_id=program.id,
-        academic_year=2,
-        semester=3,
+        study_year=2,
+        semester=DEMO_SEMESTER,
         preferred_language="sq",
     )
 
@@ -634,8 +923,8 @@ def seed_cohort(
                 user_id=user.id,
                 student_number=f"2024-CS-{index:03d}",
                 program_id=program.id,
-                academic_year=2,
-                semester=3,
+                study_year=2,
+                semester=DEMO_SEMESTER,
                 preferred_language="sq",
             )
 
@@ -644,10 +933,9 @@ def seed_cohort(
 
             created += 1
 
-        # Kohorta ndjek të njëjtat lëndë bazë, por jo të gjitha:
-        # kështu "lëndët e mia" ndryshojnë vërtet nga student në
-        # student.
-        for code in ENROLLED_COURSE_CODES[: 2 + index % 2]:
+        # Lëndët e semestrit janë të detyrueshme: e gjithë kohorta i
+        # ndjek të gjashta.
+        for code in ENROLLED_COURSE_CODES:
             course = courses[code]
 
             exists = db.scalar(
@@ -696,31 +984,31 @@ def get_or_create_course(db: Session, fields: dict) -> Course:
 
 
 def seed_extra_faculties(db: Session, cs_program: Program) -> dict:
-    """Semestrat që i mungonin programit SHK dhe tre fakultete të tjera.
+    """Tre fakultetet e tjera të demos, me programet dhe lëndët e tyre.
 
     Kthen numrin e fakulteteve, programeve dhe lëndëve të demos.
     """
 
-    for data in CS_EXTRA_COURSES:
-        get_or_create_course(db, course_from_tuple(cs_program, data))
-
     for spec in EXTRA_FACULTIES:
-        faculty = db.scalar(
-            select(Faculty).where(Faculty.name == spec["faculty"])
-        )
-
-        if faculty is None:
-            faculty = Faculty(
-                name=spec["faculty"], description=spec["description"]
-            )
-            db.add(faculty)
-            db.flush()
-
         program = db.scalar(
             select(Program).where(Program.name == spec["program"]["name"])
         )
 
+        # Fakulteti krijohet vetëm bashkë me programin, në bazë të re. Kur
+        # programi ekziston, struktura i përket administratorit: një
+        # fakultet që ai e ka fshirë nuk rikrijohet.
         if program is None:
+            faculty = db.scalar(
+                select(Faculty).where(Faculty.name == spec["faculty"])
+            )
+
+            if faculty is None:
+                faculty = Faculty(
+                    name=spec["faculty"], description=spec["description"]
+                )
+                db.add(faculty)
+                db.flush()
+
             program = Program(faculty_id=faculty.id, **spec["program"])
             db.add(program)
             db.flush()
@@ -740,7 +1028,7 @@ def seed_extra_faculties(db: Session, cs_program: Program) -> dict:
                 role=UserRole.PROFESSOR,
             )
             professor = Professor(
-                faculty_id=faculty.id, user_id=account.id, **data
+                faculty_id=program.faculty_id, user_id=account.id, **data
             )
             db.add(professor)
             db.flush()
@@ -762,11 +1050,21 @@ def seed_extra_faculties(db: Session, cs_program: Program) -> dict:
     }
 
 
-def document_scope(db: Session, spec: dict) -> tuple[int | None, int | None]:
-    """Fakulteti dhe lënda e një dokumenti demo, nga emrat te specifikimi."""
+def document_scope(
+    db: Session, spec: dict
+) -> tuple[int | None, int | None] | None:
+    """Fakulteti dhe lënda e një dokumenti demo, nga emrat te specifikimi.
+
+    None kur lënda ose fakulteti nuk ekziston më (e ka fshirë admini):
+    atëherë dokumenti mbetet me fushëveprimin që ka.
+    """
 
     if spec.get("course"):
         course = db.scalar(select(Course).where(Course.code == spec["course"]))
+
+        if course is None:
+            return None
+
         program = db.get(Program, course.program_id)
 
         return program.faculty_id, course.id
@@ -776,7 +1074,7 @@ def document_scope(db: Session, spec: dict) -> tuple[int | None, int | None]:
             select(Faculty).where(Faculty.name == spec["faculty"])
         )
 
-        return faculty.id, None
+        return (faculty.id, None) if faculty else None
 
     return None, None
 
@@ -784,14 +1082,14 @@ def document_scope(db: Session, spec: dict) -> tuple[int | None, int | None]:
 # Lëndët me më shumë se një grup: kodi -> [(grupi, mbiemri i profesorit)].
 # Lëndët e tjera me profesor marrin vetëm "Grupi A" me koordinatorin.
 EXTRA_GROUPS = {
-    "CS201": [("Grupi A", "Hoxha"), ("Grupi B", "Berisha")],
+    "SKI-305": [("Grupi A", "Hoxha"), ("Grupi B", "Berisha")],
 }
 
-# Ushtrimet e veçanta të çdo grupi të CS201, të enjten, në orë që nuk
+# Ushtrimet e veçanta të çdo grupi të SKI-305, të enjten, në orë që nuk
 # përplasen me ligjëratat e përbashkëta të studentit demo.
 GROUP_SCHEDULES = {
-    ("CS201", "Grupi A"): ("Thursday", time(11, 0), time(12, 30), "Lab-1"),
-    ("CS201", "Grupi B"): ("Thursday", time(16, 0), time(17, 30), "Lab-1"),
+    ("SKI-305", "Grupi A"): ("Thursday", time(11, 0), time(12, 30), "Lab-1"),
+    ("SKI-305", "Grupi B"): ("Thursday", time(16, 0), time(17, 30), "Lab-1"),
 }
 
 
@@ -920,6 +1218,12 @@ def seed_groups(
     return created
 
 
+def spec_fingerprint(spec: dict) -> str:
+    content = json.dumps(spec, ensure_ascii=False, sort_keys=True)
+
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+
 def seed_documents(db: Session, admin: User) -> list[Document]:
     """Krijon PDF-të demo dhe rreshtat përkatës në bazë.
 
@@ -936,7 +1240,17 @@ def seed_documents(db: Session, admin: User) -> list[Document]:
     for spec in DEMO_DOCUMENTS + FACULTY_DOCUMENTS:
         file_path = upload_dir / spec["file_name"]
 
-        if not file_path.exists():
+        # Gjurma e specifikimit ruhet pranë PDF-së: kur teksti i demos
+        # ndryshon (p.sh. kurrikula e re), PDF-ja rishkruhet dhe
+        # dokumenti ri-indeksohet.
+        fingerprint = spec_fingerprint(spec)
+        marker = file_path.with_name(file_path.name + ".spec")
+        changed = (
+            not marker.exists()
+            or marker.read_text(encoding="utf-8") != fingerprint
+        )
+
+        if changed or not file_path.exists():
             write_pdf(spec, file_path)
 
         document = db.scalar(
@@ -960,9 +1274,20 @@ def seed_documents(db: Session, admin: User) -> list[Document]:
             db.add(document)
             db.flush()
 
+        elif changed:
+            document.title = spec["title"]
+            document.description = spec["description"]
+            document.academic_year = spec["academic_year"]
+            document.status = DocumentStatus.PENDING
+
+        marker.write_text(fingerprint, encoding="utf-8")
+
         # Rifreskohet në çdo nisje, që edhe dokumentet e seed-uara para
         # se të ekzistonte fusha ta marrin vendin e tyre.
-        document.faculty_id, document.course_id = document_scope(db, spec)
+        scope = document_scope(db, spec)
+
+        if scope is not None:
+            document.faculty_id, document.course_id = scope
 
         documents.append(document)
 
@@ -1063,8 +1388,11 @@ def main() -> None:
         faculty = get_or_create_faculty(db)
         program = get_or_create_program(db, faculty)
         professors = seed_professors(db, faculty)
+        merged = merge_legacy_program(db, program)
+        migrated = migrate_legacy_curriculum(db, program)
         courses = seed_courses(db, program, professors)
         catalog = seed_extra_faculties(db, program)
+        periods_created = seed_periods(db)
 
         schedules_created = seed_schedules(db, courses)
         exams_created = seed_exams(db, courses)
@@ -1076,6 +1404,13 @@ def main() -> None:
         enrollments_created = seed_enrollments(db, profile, courses)
         cohort_created = seed_cohort(db, program, courses)
         groups_created = seed_groups(db, professors, profile)
+        synced = (
+            sync_semester_enrollments(db, program)
+            if migrated or merged
+            else 0
+        )
+        history_created = seed_completed_history(db, program)
+        periods_assigned = assign_enrollment_periods(db)
 
         documents = seed_documents(db, admin)
 
@@ -1107,6 +1442,12 @@ def main() -> None:
             f"{catalog['programs']} programe, {catalog['courses']} lëndë"
         )
         print(f"  Profesorë: {len(professors)}")
+        print(f"  Lëndë të riemërtuara (CS -> SKI): {migrated}")
+        print(f"  Programi i vjetër u bashkua: {'po' if merged else 'jo'}")
+        print(f"  Periudha të reja:        {periods_created}")
+        print(f"  Regjistrime të semestrit: {synced}")
+        print(f"  Regjistrime me periudhë: {periods_assigned}")
+        print(f"  Lëndë të përfunduara (viti 1): {history_created}")
         print(f"  Orare të reja:        {schedules_created}")
         print(f"  Provime të reja:      {exams_created}")
         print(f"  Parakushte të reja:   {prerequisites_created}")

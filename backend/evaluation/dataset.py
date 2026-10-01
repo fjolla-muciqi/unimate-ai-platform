@@ -5,6 +5,12 @@ e `scripts/demo_documents.py` ose në bazën që mbush `scripts.seed`.
 Studenti i vlerësimit është studenti demo (viti 2, semestri 3, i
 regjistruar në CS201, CS202 dhe CS203).
 
+Pyetjet i përkasin versionit të mëparshëm të kurrikulës demo (commit
+845b794), mbi të cilin u matën rezultatet te `results/`. Në kurrikulën
+aktuale këto lëndë janë SKI-305, SKI-303 dhe SKI-301
+(`scripts/curriculum.py`), prandaj një ekzekutim i ri kërkon që pyetjet
+të përshtaten.
+
 Fushat:
 
 - `agents`: agjentët që pritet të aktivizohen. Nga tools e thirrura

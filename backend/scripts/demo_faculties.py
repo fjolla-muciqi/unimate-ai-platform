@@ -1,34 +1,16 @@
 """Fakultetet shtesë të demos, me programe, lëndë dhe dokumente.
 
-Fakulteti i Inxhinierisë Kompjuterike vjen nga `seed.py`; këtu shtohen
-lëndët që i mungonin për semestrat 2, 4 dhe 6, dhe tre fakultete të
-tjera, secili me program trevjeçar, dy lëndë për semestër, një
-profesor me llogari dhe dokumentet e veta.
+Fakulteti "Shkenca Kompjuterike dhe Inxhinieri" vjen nga `seed.py` dhe
+`curriculum.py`; këtu shtohen tre fakultete të tjera, secili me program
+trevjeçar, dy lëndë për semestër, një profesor me llogari dhe dokumentet
+e veta.
 
 Dokumentet e reja u përkasin vetëm fakulteteve të reja. Kështu
-studentja demo (Shkenca Kompjuterike) kërkon në të njëjtat dokumente si
+studentja demo (Shkenca Kompjuterike dhe Inxhinieri) kërkon në të njëjtat dokumente si
 në vlerësimin e tezës, dhe rezultatet e saj mbeten të vlefshme.
 """
 
-# (kodi, emri, ECTS, semestri, përshkrimi)
-CS_EXTRA_COURSES = [
-    ("CS103", "Programim i Avancuar", 6, 2,
-     "Strukturat e të dhënave në Python, testimi dhe trajtimi i gabimeve."),
-    ("CS104", "Arkitektura e Kompjuterëve", 6, 2,
-     "Përfaqësimi i të dhënave, procesori, memoria dhe gjuha assembly."),
-    ("CS204", "Rrjetat Kompjuterike", 6, 4,
-     "Modeli TCP/IP, protokollet, adresimi dhe siguria bazë e rrjetit."),
-    ("CS205", "Inxhinieri Softuerike", 6, 4,
-     "Kërkesat, projektimi, testimi dhe metodologjitë agile."),
-    ("CS302", "Siguria Kompjuterike", 6, 5,
-     "Kriptografia, autentikimi, sulmet e zakonshme dhe mbrojtja."),
-    ("CS303", "Zhvillimi i Aplikacioneve Web", 6, 6,
-     "Frontend, backend, API REST dhe bazat e të dhënave në web."),
-    ("CS304", "Punimi i Diplomës", 6, 6,
-     "Hulumtimi, zhvillimi dhe mbrojtja e punimit të diplomës."),
-]
-
-
+# Lëndët: (kodi, emri, ECTS, semestri, përshkrimi).
 EXTRA_FACULTIES = [
     {
         "faculty": "Fakulteti i Ekonomisë dhe Menaxhmentit",

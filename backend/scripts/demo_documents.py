@@ -21,6 +21,8 @@ from reportlab.platypus import (
     Spacer,
 )
 
+from scripts.curriculum import FACULTY_NAME
+
 
 # Çdo dokument: metadata + faqet. Një faqe është një listë blloqesh:
 # ("h1" | "h2" | "p", teksti).
@@ -29,7 +31,7 @@ DEMO_DOCUMENTS: list[dict] = [
         "file_name": "rregullorja-e-studimeve-bachelor.pdf",
         # Kujt i përket (shih `app/ai/rag/scope.py`); pa këto dy fusha,
         # dokumenti i përket gjithë universitetit.
-        "faculty": "Fakulteti i Inxhinierisë Kompjuterike",
+        "faculty": FACULTY_NAME,
         "title": "Rregullorja e Studimeve Bachelor",
         "document_type": "REGULATION",
         "description": (
@@ -44,9 +46,9 @@ DEMO_DOCUMENTS: list[dict] = [
                 (
                     "p",
                     "Kjo rregullore zbatohet për të gjithë studentët "
-                    "e ciklit të parë të studimeve në Fakultetin e "
-                    "Inxhinierisë Kompjuterike, të regjistruar nga "
-                    "viti akademik 2025/2026 e tutje.",
+                    "e ciklit të parë të studimeve në fakultetin "
+                    "Shkenca Kompjuterike dhe Inxhinieri, të regjistruar "
+                    "nga viti akademik 2025/2026 e tutje.",
                 ),
                 ("h2", "Neni 2 — Kohëzgjatja dhe kreditet"),
                 (
@@ -147,32 +149,35 @@ DEMO_DOCUMENTS: list[dict] = [
         ],
     },
     {
+        # Emri i skedarit mbetet nga versioni i parë i demos, që
+        # vlerësimi i tezës ta gjejë të njëjtin burim.
         "file_name": "syllabus-cs201-algoritme.pdf",
-        "course": "CS201",
-        "title": "Syllabus: CS201 Algoritme dhe Struktura të Dhënash",
+        "course": "SKI-305",
+        "title": "Syllabus: SKI-305 Hyrje në Algoritme",
         "document_type": "SYLLABUS",
         "description": (
-            "Përmbajtja, literatura dhe vlerësimi i lëndës CS201."
+            "Përmbajtja, literatura dhe vlerësimi i lëndës SKI-305."
         ),
         "academic_year": "2025/2026",
         "pages": [
             [
                 (
                     "h1",
-                    "CS201 — Algoritme dhe Struktura të Dhënash",
+                    "SKI-305 — Hyrje në Algoritme",
                 ),
                 ("h2", "Të dhënat e lëndës"),
                 (
                     "p",
-                    "Kodi: CS201. Kredite: 7 ECTS. Semestri: 3. "
+                    "Kodi: SKI-305. Kredite: 5 ECTS (demonstrative). "
+                    "Semestri: 3, viti i dytë i studimeve. "
                     "Ligjërues: Prof. Dr. Arben Hoxha, zyra B-210. "
                     "Konsultime: e martë 12:00-14:00.",
                 ),
                 ("h2", "Parakushtet"),
                 (
                     "p",
-                    "Studenti duhet të ketë kaluar lëndën CS101 "
-                    "Hyrje në Programim. Njohuritë bazë të "
+                    "Studenti duhet të ketë kaluar lëndën SKI-201 "
+                    "Shkenca Kompjuterike 1. Njohuritë bazë të "
                     "matematikës diskrete janë të domosdoshme.",
                 ),
                 ("h2", "Përmbajtja javore"),
