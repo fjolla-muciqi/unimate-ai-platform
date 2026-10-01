@@ -1,0 +1,97 @@
+{
+  "participants": 10,
+  "sus": {
+    "n": 10,
+    "mean": 93.2,
+    "sd": 4.6,
+    "median": 95.0,
+    "min": 82.5,
+    "max": 97.5,
+    "adjective": "shkëlqyeshëm",
+    "per_participant": {
+      "P01": 82.5,
+      "P02": 95.0,
+      "P03": 97.5,
+      "P04": 95.0,
+      "P05": 90.0,
+      "P06": 95.0,
+      "P07": 95.0,
+      "P08": 90.0,
+      "P09": 95.0,
+      "P10": 97.5
+    }
+  },
+  "trust": [
+    {
+      "statement": "Përgjigjet më dukeshin të besueshme",
+      "n": 10,
+      "mean": 5,
+      "sd": 0.0,
+      "median": 5.0,
+      "min": 5,
+      "max": 5,
+      "agree_share": 1.0
+    },
+    {
+      "statement": "Burimet (dokumenti, faqja) ma rritën besimin",
+      "n": 10,
+      "mean": 4.9,
+      "sd": 0.3,
+      "median": 5.0,
+      "min": 4,
+      "max": 5,
+      "agree_share": 1.0
+    },
+    {
+      "statement": "\"Nuk e gjeta\" ma rriti besimin te sistemi",
+      "n": 10,
+      "mean": 4.8,
+      "sd": 0.4,
+      "median": 5.0,
+      "min": 4,
+      "max": 5,
+      "agree_share": 1.0
+    },
+    {
+      "statement": "Do ta kontrolloja burimin për vendime të rëndësishme",
+      "n": 10,
+      "mean": 1.9,
+      "sd": 0.7,
+      "median": 2.0,
+      "min": 1,
+      "max": 3,
+      "agree_share": 0.0
+    },
+    {
+      "statement": "Do ta preferoja mbi kërkimin manual",
+      "n": 10,
+      "mean": 5,
+      "sd": 0.0,
+      "median": 5.0,
+      "min": 5,
+      "max": 5,
+      "agree_share": 1.0
+    }
+  ],
+  "tasks": {},
+  "saw_sources_share": null,
+  "ai_use": {
+    "Rrallë": 1,
+    "Çdo ditë": 5,
+    "Çdo javë": 4
+  },
+  "comments": {
+    "liked": [
+      "Saktesia dhe ruajtja e privatsis",
+      "Korektsia dhe besueshmeria",
+      "Shpejtesia e pergjigjjeve te sakta dhe menyra se si nuk lejohej shfaqja e te dhenave te dikujt tjeter",
+      "Pergjigjjet e sakta dhe te bazuara ne dokumente",
+      "Pergjigjjet ne pytje teorike per lende perkatese",
+      "Menyra se si pergjigjej kur nuk kishte informacione"
+    ],
+    "improve": [
+      "Asgje",
+      "Do shtoja sidebar tek pjesa e bisedave te ruajtura"
+    ]
+  }
+}
